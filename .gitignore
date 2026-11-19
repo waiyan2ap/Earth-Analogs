@@ -1,0 +1,57 @@
+# Raw downloads: big, and always re-downloadable. Never commit these.
+pipeline/raw/*
+!pipeline/raw/.gitkeep
+*.tif
+*.tiff
+*.TIF
+*.TIFF
+*.nc
+*.h5
+*.hdf
+*.hdf5
+*.img
+*.lbl
+*.jp2
+# TES Data Tool exports (file names contain the requester's email address)
+*.van
+*.van.gz
+
+# Archives and bundles (for example zips we pass around)
+*.zip
+*.7z
+*.rar
+*.tar
+*.tar.gz
+
+# Generated copies and test output
+pipeline/test_grid/
+docs/data_backup/
+pipeline/**/*.tmp
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+.pytest_cache/
+
+# Node (only used for local test scripts)
+node_modules/
+
+# Secrets and logs
+.env
+.env.*
+*.key
+*.pem
+*.log
+
+# Editor and OS files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini

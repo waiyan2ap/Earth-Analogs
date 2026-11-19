@@ -1,0 +1,6 @@
+pipeline/raw
+MCD43C3*
+*.van
+*.van.gz
+*.hdf
+*.tif

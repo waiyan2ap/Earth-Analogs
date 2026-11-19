@@ -1,0 +1,576 @@
+{
+ "_note": "Hand-edited team file. pipeline/build_named_sites.py turns it into docs/data/sites.json (do not edit that one). Numbers are NOT typed here: Earth site values are read from the Earth grid (build_grid.py) at each site's 1-degree cell, Moon/Mars values from docs/data/targets.json (build_targets.py). 'tags' are team-curated geology labels: put a citation in 'tags_src' (paper, DOI or agency page). Tags are shown but not scored by default. Body facts must each carry a source. 'analog_for' lists the bodies (moon, mars) an Earth site is used as an analog for; auto-ranking only pairs a site with targets on those bodies. It is a team curation like the tags: cite it in 'tags_src' when you can.",
+ "bodies": {
+  "earth": {
+   "name": "Earth",
+   "summary": "Home planet. Blue markers are analog sites for studying the Moon and Mars.",
+   "facts": [
+    {
+     "label": "Surface gravity",
+     "value": "9.80 m/s²",
+     "src": "NASA Earth Fact Sheet",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html"
+    },
+    {
+     "label": "Length of day",
+     "value": "24.0 h",
+     "src": "NASA Earth Fact Sheet",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html"
+    },
+    {
+     "label": "Surface pressure",
+     "value": "1014 mb",
+     "src": "NASA Earth Fact Sheet",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/earthfact.html"
+    }
+   ]
+  },
+  "moon": {
+   "name": "Moon",
+   "summary": "No atmosphere. Amber markers are candidate sites.",
+   "facts": [
+    {
+     "label": "Surface gravity",
+     "value": "1.62 m/s²",
+     "src": "NASA Moon Fact Sheet",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html"
+    },
+    {
+     "label": "Synodic period (day-night cycle)",
+     "value": "29.53 days",
+     "src": "NASA Moon Fact Sheet",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html"
+    },
+    {
+     "label": "Surface pressure (night)",
+     "value": "3 × 10⁻¹⁵ bar",
+     "src": "NASA Moon Fact Sheet",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html"
+    }
+   ]
+  },
+  "mars": {
+   "name": "Mars",
+   "summary": "Thin CO₂ atmosphere. Amber markers are candidate sites.",
+   "facts": [
+    {
+     "label": "Surface gravity",
+     "value": "3.71 m/s²",
+     "src": "NASA Mars Fact Sheet",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
+    },
+    {
+     "label": "Length of day",
+     "value": "24.6597 h",
+     "src": "NASA Mars Fact Sheet",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
+    },
+    {
+     "label": "Surface pressure",
+     "value": "6.36 mb at mean radius (4.0 to 8.7 mb by season)",
+     "src": "NASA Mars Fact Sheet",
+     "url": "https://nssdc.gsfc.nasa.gov/planetary/factsheet/marsfact.html"
+    }
+   ]
+  }
+ },
+ "sites": [
+  {
+   "id": "shackleton",
+   "body": "moon",
+   "type": "target",
+   "name": "Shackleton Crater",
+   "lat": -89.9,
+   "lon": 0,
+   "coord_src": "Site marker carried over from the original dataset. Not yet checked against a gazetteer.",
+   "summary": "Crater at the lunar south pole with permanently shadowed ground where water ice may be trapped.",
+   "tags": [
+    "impact-crater",
+    "polar",
+    "ice",
+    "regolith"
+   ],
+   "tags_src": "",
+   "analogs": [
+    {
+     "id": "devon",
+     "why": "Both are polar impact craters with ice and extreme cold, good for testing drilling and logistics."
+    },
+    {
+     "id": "dryvalleys",
+     "why": "Cold, dry polar regolith with ground ice."
+    }
+   ]
+  },
+  {
+   "id": "tranquility",
+   "body": "moon",
+   "type": "target",
+   "name": "Tranquility Base",
+   "lat": 0.67,
+   "lon": 23.47,
+   "coord_src": "Apollo 11 landing site 0.67° N, 23.47° E (NASA NSSDC Apollo 11 page, https://nssdc.gsfc.nasa.gov/planetary/lunar/apollo11info.html).",
+   "summary": "Apollo 11 landing site on a flat basaltic mare.",
+   "tags": [
+    "basalt",
+    "volcanic",
+    "regolith",
+    "plain"
+   ],
+   "tags_src": "",
+   "analogs": [
+    {
+     "id": "craters",
+     "why": "Fresh basalt flows and cinder fields resemble mare basalt terrain."
+    },
+    {
+     "id": "maunaloa",
+     "why": "Basaltic volcanic ground, used for regolith and rover trials."
+    }
+   ]
+  },
+  {
+   "id": "jezero",
+   "body": "mars",
+   "type": "target",
+   "name": "Jezero Crater",
+   "lat": 18.4,
+   "lon": 77.5,
+   "coord_src": "Site marker carried over from the original dataset. Not yet checked against a gazetteer.",
+   "summary": "Crater with an ancient river delta and lakebed; Perseverance rover landing site.",
+   "tags": [
+    "impact-crater",
+    "sedimentary",
+    "dry-lakebed",
+    "dry",
+    "layered-rock"
+   ],
+   "tags_src": "",
+   "analogs": [
+    {
+     "id": "atacama",
+     "why": "Hyper-arid ancient lakebeds and salts, a standard biosignature-hunting analog."
+    },
+    {
+     "id": "dryvalleys",
+     "why": "Cold hyper-arid desert with ground ice."
+    }
+   ]
+  },
+  {
+   "id": "olympus",
+   "body": "mars",
+   "type": "target",
+   "name": "Olympus Mons",
+   "lat": 18.6,
+   "lon": -133.8,
+   "coord_src": "Site marker carried over from the original dataset. Not yet checked against a gazetteer.",
+   "summary": "The largest volcano in the solar system, a basaltic shield.",
+   "tags": [
+    "basalt",
+    "volcanic",
+    "shield-volcano"
+   ],
+   "tags_src": "",
+   "analogs": [
+    {
+     "id": "maunaloa",
+     "why": "Both are basaltic shield volcanoes."
+    },
+    {
+     "id": "craters",
+     "why": "Basaltic lava flows and cinder cones."
+    }
+   ]
+  },
+  {
+   "id": "valles",
+   "body": "mars",
+   "type": "target",
+   "name": "Valles Marineris",
+   "lat": -14,
+   "lon": -59,
+   "coord_src": "Site marker carried over from the original dataset. Not yet checked against a gazetteer.",
+   "summary": "Giant canyon system with exposed layered rock.",
+   "tags": [
+    "canyon",
+    "layered-rock",
+    "sedimentary",
+    "dry"
+   ],
+   "tags_src": "",
+   "analogs": [
+    {
+     "id": "canyon",
+     "why": "Deep canyon walls exposing layered strata."
+    }
+   ]
+  },
+  {
+   "id": "devon",
+   "body": "earth",
+   "type": "analog",
+   "name": "Devon Island, Canada",
+   "lat": 75.4,
+   "lon": -89,
+   "coord_src": "Site marker carried over from the original dataset. Not yet checked against a gazetteer.",
+   "summary": "Polar desert with the Haughton impact crater; hosts the Haughton-Mars Project research station.",
+   "tags": [
+    "impact-crater",
+    "polar",
+    "ice",
+    "permafrost",
+    "dry"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "moon",
+    "mars"
+   ]
+  },
+  {
+   "id": "dryvalleys",
+   "body": "earth",
+   "type": "analog",
+   "name": "McMurdo Dry Valleys, Antarctica",
+   "lat": -77.5,
+   "lon": 162.5,
+   "coord_src": "Site marker carried over from the original dataset. Not yet checked against a gazetteer.",
+   "summary": "Ice-free polar desert, one of the driest and coldest places on Earth.",
+   "tags": [
+    "polar",
+    "ice",
+    "dry",
+    "permafrost",
+    "regolith"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "moon",
+    "mars"
+   ]
+  },
+  {
+   "id": "craters",
+   "body": "earth",
+   "type": "analog",
+   "name": "Craters of the Moon, Idaho",
+   "lat": 43.4,
+   "lon": -113.5,
+   "coord_src": "Site marker carried over from the original dataset. Not yet checked against a gazetteer.",
+   "summary": "Young basalt lava fields and cinder cones.",
+   "tags": [
+    "basalt",
+    "volcanic",
+    "plain"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "moon",
+    "mars"
+   ]
+  },
+  {
+   "id": "atacama",
+   "body": "earth",
+   "type": "analog",
+   "name": "Atacama Desert, Chile",
+   "lat": -24,
+   "lon": -69,
+   "coord_src": "Site marker carried over from the original dataset. Not yet checked against a gazetteer.",
+   "summary": "Hyper-arid desert with ancient salt flats and dry lakebeds.",
+   "tags": [
+    "dry",
+    "dry-lakebed",
+    "sedimentary",
+    "salt"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "mars"
+   ]
+  },
+  {
+   "id": "maunaloa",
+   "body": "earth",
+   "type": "analog",
+   "name": "Mauna Loa, Hawaii",
+   "lat": 19.5,
+   "lon": -155.6,
+   "coord_src": "Site marker carried over from the original dataset. Not yet checked against a gazetteer.",
+   "summary": "Massive active basaltic shield volcano.",
+   "tags": [
+    "basalt",
+    "volcanic",
+    "shield-volcano",
+    "regolith"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "moon",
+    "mars"
+   ]
+  },
+  {
+   "id": "canyon",
+   "body": "earth",
+   "type": "analog",
+   "name": "Grand Canyon, USA",
+   "lat": 36.1,
+   "lon": -112.1,
+   "coord_src": "Site marker carried over from the original dataset. Not yet checked against a gazetteer.",
+   "summary": "Deep canyon exposing a long sequence of layered sedimentary rock.",
+   "tags": [
+    "canyon",
+    "layered-rock",
+    "sedimentary",
+    "dry"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "mars"
+   ]
+  },
+  {
+   "id": "meteorcrater",
+   "body": "earth",
+   "type": "analog",
+   "name": "Meteor Crater, Arizona",
+   "lat": 35.027,
+   "lon": -111.022,
+   "coord_src": "Coordinates from Claude's general knowledge, NOT checked against a gazetteer. Verify against the page named in 'coord_check' before relying on them; any error under about 0.3 degrees does not change the 1-degree grid values.",
+   "coord_check": "Wikipedia: Meteor Crater",
+   "summary": "Well-preserved simple impact crater in flat-lying sedimentary rock; used for Apollo astronaut geology training.",
+   "tags": [
+    "impact-crater",
+    "sedimentary",
+    "dry",
+    "layered-rock"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "moon"
+   ]
+  },
+  {
+   "id": "ries",
+   "body": "earth",
+   "type": "analog",
+   "name": "Nördlinger Ries, Germany",
+   "lat": 48.88,
+   "lon": 10.57,
+   "coord_src": "Coordinates from Claude's general knowledge, NOT checked against a gazetteer. Verify against the page named in 'coord_check' before relying on them; any error under about 0.3 degrees does not change the 1-degree grid values.",
+   "coord_check": "Wikipedia: Nördlinger Ries",
+   "summary": "Large complex impact structure; used for Apollo astronaut geology training.",
+   "tags": [
+    "impact-crater",
+    "sedimentary"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "moon"
+   ]
+  },
+  {
+   "id": "sudbury",
+   "body": "earth",
+   "type": "analog",
+   "name": "Sudbury Basin, Canada",
+   "lat": 46.6,
+   "lon": -81.18,
+   "coord_src": "Coordinates from Claude's general knowledge, NOT checked against a gazetteer. Verify against the page named in 'coord_check' before relying on them; any error under about 0.3 degrees does not change the 1-degree grid values.",
+   "coord_check": "Wikipedia: Sudbury Basin",
+   "summary": "One of the largest and oldest known impact structures on Earth; used for Apollo astronaut geology training.",
+   "tags": [
+    "impact-crater"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "moon"
+   ]
+  },
+  {
+   "id": "lanzarote",
+   "body": "earth",
+   "type": "analog",
+   "name": "Lanzarote, Canary Islands",
+   "lat": 29.03,
+   "lon": -13.63,
+   "coord_src": "Coordinates from Claude's general knowledge, NOT checked against a gazetteer. Verify against the page named in 'coord_check' before relying on them; any error under about 0.3 degrees does not change the 1-degree grid values.",
+   "coord_check": "Wikipedia: Lanzarote",
+   "summary": "Volcanic island with young basalt lava fields and lava tubes; ESA PANGAEA training site.",
+   "tags": [
+    "basalt",
+    "volcanic",
+    "regolith"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "moon",
+    "mars"
+   ]
+  },
+  {
+   "id": "mdrs",
+   "body": "earth",
+   "type": "analog",
+   "name": "Mars Desert Research Station, Utah",
+   "lat": 38.406,
+   "lon": -110.792,
+   "coord_src": "Coordinates from Claude's general knowledge, NOT checked against a gazetteer. Verify against the page named in 'coord_check' before relying on them; any error under about 0.3 degrees does not change the 1-degree grid values.",
+   "coord_check": "Mars Society MDRS page or Wikipedia: Mars Desert Research Station",
+   "summary": "Desert of layered sedimentary rock; Mars Society simulation habitat.",
+   "tags": [
+    "sedimentary",
+    "layered-rock",
+    "dry"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "mars"
+   ]
+  },
+  {
+   "id": "riotinto",
+   "body": "earth",
+   "type": "analog",
+   "name": "Río Tinto, Spain",
+   "lat": 37.69,
+   "lon": -6.59,
+   "coord_src": "Coordinates from Claude's general knowledge, NOT checked against a gazetteer. Verify against the page named in 'coord_check' before relying on them; any error under about 0.3 degrees does not change the 1-degree grid values.",
+   "coord_check": "Wikipedia: Rio Tinto (river)",
+   "summary": "Acidic, iron-rich river; studied as an analog for Martian acid-sulfate environments.",
+   "tags": [
+    "acid-water",
+    "iron-minerals"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "mars"
+   ]
+  },
+  {
+   "id": "svalbard",
+   "body": "earth",
+   "type": "analog",
+   "name": "Bockfjorden, Svalbard",
+   "lat": 79.4,
+   "lon": 13.4,
+   "coord_src": "Coordinates from Claude's general knowledge, NOT checked against a gazetteer. Verify against the page named in 'coord_check' before relying on them; any error under about 0.3 degrees does not change the 1-degree grid values.",
+   "coord_check": "Wikipedia: Bockfjorden Volcanic Complex",
+   "summary": "Arctic volcanic complex with permafrost and carbonate deposits; AMASE expedition site.",
+   "tags": [
+    "volcanic",
+    "polar",
+    "ice",
+    "permafrost"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "mars"
+   ]
+  },
+  {
+   "id": "holuhraun",
+   "body": "earth",
+   "type": "analog",
+   "name": "Holuhraun lava field, Iceland",
+   "lat": 64.85,
+   "lon": -16.83,
+   "coord_src": "Coordinates from Claude's general knowledge, NOT checked against a gazetteer. Verify against the page named in 'coord_check' before relying on them; any error under about 0.3 degrees does not change the 1-degree grid values.",
+   "coord_check": "Wikipedia: Holuhraun",
+   "summary": "Fresh basalt lava field from the 2014-2015 eruption; rover and mapping test site.",
+   "tags": [
+    "basalt",
+    "volcanic"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "mars"
+   ]
+  },
+  {
+   "id": "lonar",
+   "body": "earth",
+   "type": "analog",
+   "name": "Lonar crater, India",
+   "lat": 19.976,
+   "lon": 76.508,
+   "coord_src": "Coordinates from Claude's general knowledge, NOT checked against a gazetteer. Verify against the page named in 'coord_check' before relying on them; any error under about 0.3 degrees does not change the 1-degree grid values.",
+   "coord_check": "Wikipedia: Lonar Lake",
+   "summary": "Impact crater in basalt rock, one of very few on Earth.",
+   "tags": [
+    "impact-crater",
+    "basalt",
+    "volcanic"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "moon",
+    "mars"
+   ]
+  },
+  {
+   "id": "pilbara",
+   "body": "earth",
+   "type": "analog",
+   "name": "Pilbara, Western Australia",
+   "lat": -21.17,
+   "lon": 119.42,
+   "coord_src": "Coordinates from Claude's general knowledge, NOT checked against a gazetteer. Verify against the page named in 'coord_check' before relying on them; any error under about 0.3 degrees does not change the 1-degree grid values.",
+   "coord_check": "Wikipedia: Dresser Formation",
+   "summary": "Ancient rocks with some of the oldest evidence of life (stromatolites); an analog for biosignature searches on Mars.",
+   "tags": [
+    "sedimentary",
+    "layered-rock",
+    "dry"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "mars"
+   ]
+  },
+  {
+   "id": "dallol",
+   "body": "earth",
+   "type": "analog",
+   "name": "Dallol, Ethiopia",
+   "lat": 14.24,
+   "lon": 40.3,
+   "coord_src": "Coordinates from Claude's general knowledge, NOT checked against a gazetteer. Verify against the page named in 'coord_check' before relying on them; any error under about 0.3 degrees does not change the 1-degree grid values.",
+   "coord_check": "Wikipedia: Dallol (hydrothermal system)",
+   "summary": "Hot, acidic, salty hydrothermal field in the Danakil Depression.",
+   "tags": [
+    "salt",
+    "volcanic",
+    "dry",
+    "acid-water"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "mars"
+   ]
+  },
+  {
+   "id": "axelheiberg",
+   "body": "earth",
+   "type": "analog",
+   "name": "Axel Heiberg Island, Canada",
+   "lat": 79.4,
+   "lon": -90.75,
+   "coord_src": "Coordinates from Claude's general knowledge, NOT checked against a gazetteer. Verify against the page named in 'coord_check' before relying on them; any error under about 0.3 degrees does not change the 1-degree grid values.",
+   "coord_check": "Wikipedia: Axel Heiberg Island",
+   "summary": "Cold perennial springs flowing through permafrost; an analog for Martian groundwater.",
+   "tags": [
+    "polar",
+    "permafrost",
+    "ice",
+    "salt"
+   ],
+   "tags_src": "",
+   "analog_for": [
+    "mars"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,119 @@
+{
+ "schema": "earth-analogs-grid/v0",
+ "cell_deg": 1.0,
+ "ny": 180,
+ "nx": 360,
+ "layout": "row-major float32 LE, row 0 = 90N, col 0 = 180W, NaN = no data",
+ "features": [
+  {
+   "key": "slope_p90",
+   "label": "Steep terrain (90th percentile slope)",
+   "unit": "deg",
+   "dimension": "terrain",
+   "scale": 15,
+   "source": "NOAA NCEI ETOPO 2022 Global Relief Model, ice surface, 60 arc-second",
+   "url": "https://www.ncei.noaa.gov/products/etopo-global-relief-model",
+   "resolution": "60 arc-second (about 1.85 km)",
+   "date": ""
+  },
+  {
+   "key": "slope_median",
+   "label": "Typical terrain (median slope)",
+   "unit": "deg",
+   "dimension": "terrain",
+   "scale": 10,
+   "source": "NOAA NCEI ETOPO 2022 Global Relief Model, ice surface, 60 arc-second",
+   "url": "https://www.ncei.noaa.gov/products/etopo-global-relief-model",
+   "resolution": "60 arc-second (about 1.85 km)",
+   "date": ""
+  },
+  {
+   "key": "relief",
+   "label": "Local relief (95th minus 5th percentile elevation)",
+   "unit": "m",
+   "dimension": "landform",
+   "scale": 2000,
+   "source": "NOAA NCEI ETOPO 2022 Global Relief Model, ice surface, 60 arc-second",
+   "url": "https://www.ncei.noaa.gov/products/etopo-global-relief-model",
+   "resolution": "60 arc-second (about 1.85 km)",
+   "date": ""
+  },
+  {
+   "key": "hypso",
+   "label": "Landform shape (hypsometric integral: low = lowland with a few peaks, high = upland cut by valleys or craters)",
+   "unit": "",
+   "dimension": "landform",
+   "scale": 0.5,
+   "source": "NOAA NCEI ETOPO 2022 Global Relief Model, ice surface, 60 arc-second",
+   "url": "https://www.ncei.noaa.gov/products/etopo-global-relief-model",
+   "resolution": "60 arc-second (about 1.85 km)",
+   "date": ""
+  },
+  {
+   "key": "ts_mean",
+   "label": "Mean surface temperature (average of day and night)",
+   "unit": "degC",
+   "dimension": "thermal",
+   "scale": 120,
+   "source": "NASA MODIS Terra MOD11C3 v6.1 land surface temperature, day and night, monthly, 12 months of 2025 averaged (LP DAAC direct download; pipeline/prep_lst.py)",
+   "url": "https://doi.org/10.5067/MODIS/MOD11C3.061",
+   "resolution": "0.05 degree (about 5.6 km)",
+   "date": ""
+  },
+  {
+   "key": "ts_range",
+   "label": "Day-night surface temperature swing",
+   "unit": "degC",
+   "dimension": "thermal",
+   "scale": 60,
+   "source": "NASA MODIS Terra MOD11C3 v6.1 land surface temperature, day and night, monthly, 12 months of 2025 averaged (LP DAAC direct download; pipeline/prep_lst.py)",
+   "url": "https://doi.org/10.5067/MODIS/MOD11C3.061",
+   "resolution": "0.05 degree (about 5.6 km)",
+   "date": ""
+  },
+  {
+   "key": "t_mean",
+   "label": "Mean air temperature (2 m)",
+   "unit": "degC",
+   "dimension": "air",
+   "scale": 120,
+   "source": "WorldClim 2.1 (1970-2000), BIO1 annual mean temperature",
+   "url": "https://www.worldclim.org/data/worldclim21.html",
+   "resolution": "10 arc-minute (about 18 km)",
+   "date": ""
+  },
+  {
+   "key": "t_range",
+   "label": "Annual air temperature range (warmest-month max minus coldest-month min)",
+   "unit": "degC",
+   "dimension": "air",
+   "scale": 60,
+   "source": "WorldClim 2.1 (1970-2000), BIO7 temperature annual range",
+   "url": "https://www.worldclim.org/data/worldclim21.html",
+   "resolution": "10 arc-minute (about 18 km)",
+   "date": ""
+  },
+  {
+   "key": "ts_day",
+   "label": "Daytime surface temperature (about 10:30 local time on Earth)",
+   "unit": "degC",
+   "dimension": "day thermal",
+   "scale": 120,
+   "source": "Derived from NASA MODIS Terra MOD11C3 v6.1 land surface temperature, 12 months of 2025: daytime mean = ts_mean + ts_range / 2 (pipeline/build_grid.py)",
+   "url": "https://doi.org/10.5067/MODIS/MOD11C3.061",
+   "resolution": "0.05 degree (about 5.6 km)",
+   "date": ""
+  },
+  {
+   "key": "albedo",
+   "label": "Surface albedo (share of sunlight reflected)",
+   "unit": "",
+   "dimension": "albedo",
+   "scale": 0.3,
+   "source": "NASA MODIS MCD43C3 v6.1 BRDF/Albedo, white-sky shortwave albedo (0.3-5.0 um), 0.05 degree CMG, one 16-day retrieval per month of 2025 averaged (LP DAAC; pipeline/prep_albedo.py); files A2025015, A2025046, A2025074, A2025105, A2025135, A2025166, A2025196, A2025227, A2025258, A2025288, A2025319, A2025349",
+   "url": "https://doi.org/10.5067/MODIS/MCD43C3.061",
+   "resolution": "0.05 degree (about 5.6 km)",
+   "date": "2026-11-15"
+  }
+ ]
+}

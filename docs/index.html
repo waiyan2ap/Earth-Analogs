@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Earth Analogs Explorer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{color-scheme:dark;--bg:#05070d;--panel:rgba(11,16,29,.95);--card:#121a2e;--line:#232f4b;--text:#e9eef9;--mute:#93a1bf;--acc:#5ec8ff;--gold:#ffc857;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+button{font:inherit;color:inherit;cursor:pointer}
+#bar{position:fixed;top:env(safe-area-inset-top,0px);left:0;right:0;display:flex;gap:6px;padding:10px;flex-wrap:wrap;align-items:center;z-index:5;pointer-events:none}
+#bar>*{pointer-events:auto}
+#bar button{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13px}
+#bar button.on{border-color:var(--acc);color:var(--acc)}
+#bar .sp{flex:1;pointer-events:none}
+#pill{font-size:12px;padding:5px 10px;border-radius:999px;border:1px solid var(--gold);color:var(--gold);background:var(--panel)}
+#pill.real{border-color:#6ee7a0;color:#6ee7a0}
+.lbl{position:fixed;transform:translate(-50%,0);padding:4px 10px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font-size:13px;cursor:pointer;z-index:4;white-space:nowrap}
+#hint{position:fixed;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom,0px));text-align:center;color:var(--mute);font-size:13px;pointer-events:none;z-index:3}
+#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 16px;font-size:13px;z-index:20;display:none;max-width:90vw;white-space:pre-line}
+/* panel */
+#panel{position:fixed;z-index:6;background:var(--panel);border:1px solid var(--line);display:none;overflow-y:auto;backdrop-filter:blur(8px);
+ left:0;right:0;bottom:env(safe-area-inset-bottom,0px);height:72vh;border-radius:16px 16px 0 0;padding:18px}
+@media(min-width:860px){#panel{left:auto;right:14px;top:calc(58px + env(safe-area-inset-top,0px));bottom:14px;height:auto;width:min(660px,58vw);border-radius:16px;padding:22px 24px}}
+#x{position:absolute;top:12px;right:14px;background:none;border:0;color:var(--mute);font-size:26px;line-height:1}
+.kick{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+h2{margin:2px 0 2px;font-size:24px;font-weight:600}
+.sub{color:var(--mute);font-size:13px}
+.mock{margin:12px 0 0;font-size:12px;color:var(--gold);background:rgba(255,200,87,.08);border:1px solid rgba(255,200,87,.35);border-radius:8px;padding:6px 10px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 4px}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;display:flex;gap:10px;align-items:center}
+.chip b{color:var(--acc);font-weight:600}
+.chip.on{border-color:var(--acc);background:#14233d}
+.vs{display:grid;grid-template-columns:1fr auto 1fr;gap:14px;align-items:stretch;margin:14px 0}
+.side{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:12px;padding:14px}
+.side.an{border-top-color:var(--acc)}
+.side h3{margin:2px 0 6px;font-size:16px}
+.side p{margin:0 0 6px;font-size:13px;color:var(--mute);line-height:1.45}
+.donut{align-self:center;width:92px;height:92px;border-radius:50%;background:conic-gradient(var(--acc) calc(var(--p)*1%),var(--line) 0);display:grid;place-items:center;position:relative}
+.donut::before{content:"";position:absolute;inset:8px;border-radius:50%;background:var(--bg)}
+.donut span{position:relative;font-size:22px;font-weight:600}
+.donut small{position:absolute;bottom:20px;font-size:9px;color:var(--mute);letter-spacing:.1em}
+@media(max-width:859px){.vs{grid-template-columns:1fr 1fr}.donut{grid-column:1/3;order:-1;justify-self:center}}
+.why{font-size:13px;line-height:1.5;margin:0 0 6px;padding:10px 12px;border-left:3px solid var(--acc);background:rgba(94,200,255,.06);border-radius:0 8px 8px 0}
+.grp{margin:18px 0 4px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.mr,.mh{display:grid;grid-template-columns:1.1fr 1fr 1fr 1fr;gap:10px;padding:9px 0;border-top:1px solid var(--line);align-items:center;font-size:14px}
+.mh{border-top:0;font-size:11px;color:var(--mute);padding-bottom:2px}
+.mr.one,.mh.one{grid-template-columns:1fr 2fr}
+.ml{color:var(--mute);font-size:13px}
+.mv small{color:var(--mute);font-size:11px}
+.na{color:var(--mute)}
+.ms{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--mute)}
+.bar{flex:1;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%}
+.tg{display:inline-block;font-size:11px;padding:2px 7px;margin:0 4px 4px 0;border-radius:999px;border:1px solid var(--line);color:var(--mute)}
+.tg.sh{border-color:var(--acc);color:var(--acc);background:rgba(94,200,255,.08)}
+.src{margin-top:16px;font-size:11px;color:var(--mute);line-height:1.6}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.btns button{background:transparent;color:var(--acc);border:1px solid var(--acc);border-radius:8px;padding:8px 14px;font-size:13px}
+.btns button.pri{background:var(--acc);color:#04121f}
+.card{display:flex;justify-content:space-between;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-top:8px;font-size:14px}
+.card b{color:var(--acc)}
+#tools{display:flex;gap:6px;align-items:center;pointer-events:auto}
+#q{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:13px;color:var(--text);width:150px;outline:none}
+#q:focus{border-color:var(--acc)}
+#res{position:fixed;z-index:25;display:none;min-width:230px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+#res button{display:flex;justify-content:space-between;gap:12px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:9px 14px;font-size:13px}
+#res button:hover{background:#14233d}#res small{color:var(--mute)}
+.mlbl{position:fixed;transform:translate(-50%,-150%);font-size:11px;padding:2px 9px;border-radius:999px;background:var(--panel);border:1px solid var(--gold);z-index:4;cursor:pointer;white-space:nowrap;display:none}
+.mlbl.an{border-color:var(--acc)}.mlbl.on{background:var(--gold);color:#111}.mlbl.an.on{background:var(--acc)}.mlbl.ef{border-color:#e8e8e8}.mlbl.ef.on{background:#e8e8e8;color:#0b0c0f}
+@keyframes pin{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+#panel>div,#panel>button.card{animation:pin .35s ease both}
+.lbl.dim{opacity:.75;font-size:12px}
+.radar{display:flex;flex-direction:column;align-items:center;margin:4px 0 6px}
+.radar svg{width:100%;max-width:420px;height:auto}
+.radar svg text{fill:var(--mute);font-size:10.5px}
+.radar .p{transform-origin:0 0;animation:grow .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes grow{from{transform:scale(.15);opacity:0}to{transform:none;opacity:1}}
+.leg{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;font-size:12px;margin-top:2px}
+.leg span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--c);margin-right:6px}
+.radar .note{font-size:11px;color:var(--mute);text-align:center;margin-top:6px;max-width:420px;line-height:1.5}
+.needs{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.need{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:13px}
+.need.on{border-color:var(--acc);background:#14233d;color:var(--acc)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{background:none;border:0;padding:6px 12px;font-size:12px;color:var(--mute)}
+.seg button.on{background:#14233d;color:var(--acc)}
+.fr{display:block;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px}
+.fr:hover{border-color:var(--acc)}
+.fr .rh{display:flex;justify-content:space-between;align-items:baseline;font-size:15px}
+.fr .rh span{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.1em}
+.fr .cov{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:8px 0 4px}
+.fr .cov i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--acc))}
+.fr small{color:var(--mute);font-size:12px}
+.fr .ra{font-size:12px;margin-top:8px;color:var(--mute)}.fr .ra b{color:var(--acc);font-weight:600}
+#panel.nf>div,#panel.nf>button{animation:none}
+.wts{margin:12px 0;border:1px solid var(--line);border-radius:10px;background:var(--card);padding:0 14px}
+.wts summary{cursor:pointer;padding:11px 0;font-size:13px}
+.cu{color:var(--gold);font-size:11px;margin-left:8px}
+.note2{font-size:11px;color:var(--mute);margin:10px 0 12px;line-height:1.5}
+.alsol{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:12px 0 0}
+.chip.auto{border-style:dashed}.chip.alt{opacity:.8}.chip small.uf{display:block;font:500 9.5px/1.2 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}.chip small.uf{display:inline;margin-left:-4px}
+.top{color:var(--gold);font-style:normal;font-size:11px;margin-left:6px}
+.need.scn.on{border-color:var(--gold);color:var(--gold);background:rgba(255,200,87,.1)}
+.mockline{margin:8px 0 0;font-size:11px;color:var(--gold);letter-spacing:.04em}
+/* loading screen */
+#load{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;background:radial-gradient(ellipse at 50% 40%,#0b1226,#05070d 70%);transition:opacity .6s ease,visibility .6s}
+#load.off{opacity:0;visibility:hidden;pointer-events:none}
+#load h1{margin:0 0 4px;font-size:22px;font-weight:600}
+#load p{margin:0;color:var(--mute);font-size:13px}
+.lo{position:relative;width:104px;height:104px;margin:0 auto 24px}
+.lo .e{position:absolute;left:50%;top:50%;width:24px;height:24px;margin:-12px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#9fdcff,#2a5d9f 70%);box-shadow:0 0 18px rgba(90,180,255,.45)}
+.lo .o{position:absolute;border:1px solid rgba(91,127,184,.28);border-radius:50%;animation:lspin linear infinite}
+.lo .o.a{inset:22px;animation-duration:3s}.lo .o.b{inset:0;animation-duration:7s}
+.lo .o i{position:absolute;left:50%;top:-4px;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:#bdbdbd}
+.lo .o.b i{top:-5px;width:10px;height:10px;margin-left:-5px;background:#d9663a}
+@keyframes lspin{to{transform:rotate(360deg)}}
+.lb{width:min(240px,70vw);height:3px;border-radius:2px;background:var(--line);overflow:hidden;margin:18px 0 10px}
+.lb i{display:block;height:100%;width:6%;background:linear-gradient(90deg,var(--gold),var(--acc));transition:width .3s ease}
+#lt{max-width:340px;line-height:1.5;min-height:1.5em}
+#load.err .lb{display:none}#load.err #lt{color:var(--gold)}
+@media(prefers-reduced-motion:reduce){.lo .o{animation:none}#load{transition:none}}
+/* methodology panel */
+.mp{font-size:13px;line-height:1.55;margin:8px 0}
+.mr.m4,.mh.m4{grid-template-columns:2.2fr .8fr .8fr .8fr}
+.ml small{display:block;font-size:11px;margin-top:2px}
+.lnk{background:none;border:0;padding:0;color:var(--acc);font-size:inherit;text-decoration:underline}
+#pill{cursor:pointer}
+.efl{height:10px;border-radius:5px;margin:8px 0 4px;border:1px solid var(--line)}
+.efs{display:flex;justify-content:space-between;font-size:11px;color:var(--mute)}
+.efr{display:grid;grid-template-columns:24px 1fr auto;gap:8px;align-items:baseline;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line);color:var(--text);padding:8px 2px;font-size:13px;cursor:pointer}
+.efr.on{background:rgba(94,200,255,.1)}
+.efr .pn{display:block;color:var(--mute);font-size:11.5px;margin-top:1px}
+.efr .rk{display:block;color:var(--mute);font-weight:400;font-size:10.5px;text-align:right;white-space:nowrap;margin-top:1px}
+.ck{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin:8px 0}
+.ck input{margin-top:3px}.ck small{display:block;font-size:11px;color:var(--mute);margin-top:2px}
+.tg.ok{border-color:#6ee7a0;color:#6ee7a0;background:rgba(110,231,160,.08)}
+.tg.pt{border-color:var(--gold);color:var(--gold);background:rgba(255,200,87,.08)}
+.tg.no{border-color:#ff8a80;color:#ff8a80;background:rgba(255,138,128,.08)}
+.cvr{display:flex;flex-wrap:wrap;align-items:baseline;margin:6px 0}
+.srow{padding:9px 0;border-bottom:1px solid var(--line);font-size:12px;line-height:1.5;color:var(--mute);overflow-wrap:anywhere}.srow a{color:var(--text)}
+.ana{margin:8px 0 10px}.ana .cvl{width:126px}.ana .cvr{flex-wrap:nowrap}.ana .cvr>span:last-child{font-size:13px;line-height:1.5}
+.cvl{width:112px;flex:none;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+/* ui refresh: hero action, tabs, category cards */
+#panel{--px:18px;--py:18px}@media(min-width:860px){#panel{--px:24px;--py:22px}}
+.hero{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:14px 0 4px;padding:14px 16px;border-radius:14px;border:1px solid rgba(94,200,255,.45);background:linear-gradient(135deg,rgba(94,200,255,.16),rgba(94,200,255,.04) 60%,rgba(255,200,87,.08))}
+.hero .ht{display:flex;flex-direction:column;gap:3px;min-width:0}.hero .ht b{font-size:15px}.hero .ht span{font-size:12px;color:var(--mute);line-height:1.4}
+.hero .go{flex:none;background:var(--acc);color:#04121f;border:0;border-radius:10px;padding:11px 16px;font-weight:700;font-size:14px;white-space:nowrap;animation:pulse 2.6s ease-out 1s 2}
+.hero .go:hover{filter:brightness(1.1)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(94,200,255,.55)}70%,100%{box-shadow:0 0 0 14px rgba(94,200,255,0)}}
+@media(max-width:520px){.hero{flex-direction:column;align-items:stretch}.hero .go{width:100%}}
+.tabs{position:sticky;top:calc(var(--py)*-1);z-index:3;display:flex;gap:4px;margin:calc(14px - var(--py)) calc(var(--px)*-1) 4px;padding:calc(var(--py) + 8px) var(--px) 8px;background:#0b101d;border-bottom:1px solid var(--line)}
+.tabs button{flex:1;background:none;border:1px solid transparent;border-radius:9px;padding:8px 10px;font-size:13px;color:var(--mute)}
+.tabs button:hover{color:var(--text)}
+.tabs button.on{background:#14233d;border-color:var(--acc);color:var(--acc);font-weight:600}
+.tabhint{font-size:12px;color:var(--mute);margin:10px 0 0;line-height:1.5}
+.gc{margin-top:14px;background:rgba(18,26,46,.55);border:1px solid var(--line);border-radius:12px;padding:6px 14px 8px}
+.gh{display:flex;gap:10px;align-items:center;padding:8px 0 6px}
+.gh .gi{font-size:18px;width:32px;height:32px;display:grid;place-items:center;border-radius:9px;background:#14233d;flex:none}
+.gh b{font-size:14px;display:block}.gh small{display:block;font-size:11px;color:var(--mute);margin-top:1px}
+.gc .mh{padding-top:2px}
+.efback{margin:2px 0 0;font-size:13px}
+/* ===== UI overhaul (Nov 2026): flat "instrument panel" look. One accent per meaning:
+   --gold = Moon/Mars target, --acc = Earth analog. No gradients, glows or emoji.
+   This block overrides the rules above; edit the look here. ===== */
+:root{--bg:#07080b;--panel:rgba(14,16,20,.97);--solid:#0e1014;--card:#14171d;--line:#272b34;--text:#e7e5df;--mute:#8d929c;--acc:#7cc7ee;--gold:#e3b04b;--ok:#7fcf9a;--bad:#ef8f7f;
+ --sel:rgba(124,199,238,.1);--r:6px;--r-s:4px;--mono:ui-monospace,"SF Mono","Cascadia Mono","Segoe UI Mono",Consolas,"Liberation Mono",monospace}
+html,body{font-family:Inter,"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+/* top bar */
+#bar{gap:0 2px;padding:0 14px;min-height:48px;background:var(--panel);border-bottom:1px solid var(--line);pointer-events:auto}
+#bar::before{content:"Earth Analogs";font:600 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text);margin-right:18px;padding-right:18px;border-right:1px solid var(--line);align-self:center;line-height:20px}
+#bar button{background:none;border:0;border-bottom:2px solid transparent;border-radius:0;padding:0 12px;height:48px;font-size:13px;color:var(--mute)}
+#bar button:hover{color:var(--text)}
+#bar button.on{border-color:var(--text);color:var(--text)}
+#tools{gap:2px;margin-left:8px}
+#q{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-s);padding:6px 10px;width:170px;margin-right:6px}
+#q::placeholder{color:var(--mute)}
+#pill{font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:6px 9px;border-radius:var(--r-s);background:none;margin-left:8px}
+#pill.real{border-color:var(--ok);color:var(--ok)}
+#res{border-radius:var(--r);box-shadow:0 12px 32px rgba(0,0,0,.5)}
+#res button:hover{background:var(--sel)}
+@media(max-width:859px){#bar::before{display:none}#bar{padding:0 6px}#bar button{height:40px;padding:0 9px}#q{width:120px}}
+/* labels on the 3D view */
+.lbl{font:500 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:5px 8px;border-radius:2px;background:rgba(14,16,20,.82)}
+.lbl:hover{border-color:var(--text)}
+.lbl.dim{font-size:10px}
+.mlbl{font:500 10.5px/1 var(--mono);letter-spacing:.06em;padding:4px 7px;border-radius:2px;background:rgba(14,16,20,.9)}
+.mlbl.on{color:#0b0c0f}
+#hint{font-size:12px;letter-spacing:.02em}
+#toast{border-radius:var(--r);top:62px;box-shadow:0 12px 32px rgba(0,0,0,.5)}
+/* panel: docked sheet */
+#panel{backdrop-filter:none;border-radius:12px 12px 0 0;border-width:1px 0 0}
+@media(max-width:859px){#panel{height:46vh;height:46dvh;min-height:180px;max-height:88vh;max-height:88dvh;padding:26px 18px 18px}}
+@media(min-width:860px){#panel{right:0;top:calc(49px + env(safe-area-inset-top,0px));bottom:0;width:min(640px,56vw);border-radius:0;border-width:0 0 0 1px}}
+#panelGrip{position:absolute;z-index:5;top:0;left:50%;width:44px;height:14px;transform:translateX(-50%);cursor:ns-resize;touch-action:none}
+#panelGrip::after{content:"";position:absolute;left:10px;right:10px;top:6px;height:3px;border-radius:2px;background:var(--mute)}
+#panelGrip:hover::after,#panelGrip:focus-visible::after{background:var(--text)}
+@media(min-width:860px){#panelGrip{top:0;bottom:0;left:0;width:12px;height:auto;transform:none;cursor:ew-resize}
+ #panelGrip::after{left:5px;right:auto;top:50%;width:2px;height:40px;transform:translateY(-50%)}}
+#x{top:14px;right:16px;font-size:22px;width:32px;height:32px;border-radius:var(--r-s)}
+#x:hover{background:var(--card);color:var(--text)}
+.kick,.grp,.alsol,.cvl{font:500 11px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.grp{margin:22px 0 6px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+#panel .grp{color:var(--text)}
+h2{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:4px 0 2px}
+.sub{font-size:13px;line-height:1.45}
+.mockline{font:500 11px/1.4 var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.realline{margin:8px 0 0;font:500 11px/1.4 var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ok)}
+.cmpsel{display:flex;flex-direction:column;gap:5px;margin:14px 0 4px}.cmpsel label{font:500 11px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.cmpsel select{background:var(--card);color:var(--text);border:1px solid var(--line);border-radius:var(--r-s);padding:8px 10px;font:inherit;font-size:13px}
+.pb{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:13px}
+.pb .bl{grid-column:1/3;display:grid;grid-template-columns:120px 1fr 70px;gap:8px;align-items:center;font-size:12px;color:var(--mute)}
+.pb .bl i{display:block;height:8px;border-radius:2px}.pb .bl b{font-weight:500;color:var(--text);text-align:right;font-variant-numeric:tabular-nums}
+.mockline::before,.realline::before,.cu::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:6px;vertical-align:1px}
+.mock{border-radius:var(--r-s);background:none}
+/* call to action */
+.hero{margin:16px 0 14px;padding:14px;border-radius:var(--r);border:1px solid var(--line);background:var(--card)}
+.hero .ht b{font-size:14px;font-weight:600}
+.hero .go,.btns button.pri{background:var(--text);color:#0b0c0f;border:1px solid var(--text);border-radius:var(--r-s);padding:9px 14px;font-weight:600;font-size:13px;animation:none}
+.hero .go:hover,.btns button.pri:hover{filter:none;background:#fff}
+.btns button{border-radius:var(--r-s);border-color:var(--line);color:var(--text);padding:8px 13px}
+.btns button:hover{border-color:var(--text)}
+/* tabs */
+.tabs{gap:0;background:var(--solid);padding-bottom:0}
+.tabs button{flex:none;border:0;border-bottom:2px solid transparent;border-radius:0;padding:10px 14px;margin-bottom:-1px;font-size:13px}
+.tabs button.on{background:none;border-color:var(--text);color:var(--text);font-weight:600}
+.tabhint{margin-top:14px}
+/* cards, chips, lists */
+.chip,.card,.fr,.side,.wts,.gc{border-radius:var(--r)}
+.chip{padding:7px 11px}.chip b,.card b,.fr .ra b{color:var(--text)}
+.chip.on,.need.on,.seg button.on{border-color:var(--acc);background:var(--sel);color:var(--text)}
+.card:hover,.fr:hover,.chip:hover{border-color:var(--mute)}
+.side{border-top-width:2px;background:none}
+.side h3{font-size:15px}
+.gc{background:none;padding:4px 14px 8px}
+.gh .gi{display:none}
+.gh b{font-size:13px}
+.why{border-left:2px solid var(--acc);background:none;border-radius:0;padding:2px 0 2px 12px;color:var(--text)}
+.need{border-radius:var(--r-s);padding:6px 11px}
+.need.scn.on{border-color:var(--gold);color:var(--gold);background:rgba(227,176,75,.08)}
+.seg{border-radius:var(--r-s)}
+.tg{border-radius:var(--r-s);font-size:11px}
+.tg.sh{background:none}
+.top,.cu{font:500 10.5px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.lnk{color:var(--text);text-decoration-color:var(--mute);text-underline-offset:3px}
+.lnk:hover{text-decoration-color:var(--text)}
+a.lnk{color:var(--text)}
+.efr.on{background:var(--sel)}
+/* numbers and tables */
+.mv,.ms,.donut span,.efs,.fr .rh span,.card b{font-variant-numeric:tabular-nums}
+.mh{font:500 10.5px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.bar,.fr .cov{height:4px;border-radius:2px}
+.fr .cov i,.lb i{background:var(--acc)}
+.donut{width:84px;height:84px}.donut::before{inset:5px;background:var(--solid)}
+.donut span{font-size:20px}.donut small{font-family:var(--mono)}
+/* planetary GIS */
+.gis-opt{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:12.5px;cursor:pointer;transition:border-color .15s,background .15s;text-align:left}
+.gis-opt:hover{border-color:var(--acc);background:rgba(94,200,255,.06)}
+.gis-opt.on{border-color:var(--acc);background:rgba(94,200,255,.14);box-shadow:inset 0 0 0 1px var(--acc);color:var(--text)}
+.gis-opt-title{font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gis-opt-unit{font:500 10.5px/1 var(--mono);color:var(--mute);margin-left:6px;flex-shrink:0}
+.gis-opt.on .gis-opt-unit{color:var(--acc)}
+.gis-probe{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin:8px 0}
+/* loading screen */
+#load{background:var(--bg)}
+#load h1{font:600 13px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px}
+.lo .e{background:#3d6fa8;box-shadow:none}
+.lb{height:2px;border-radius:0}
+@media(prefers-reduced-motion:reduce){#panel>div,#panel>button.card,.radar .p{animation:none}}
+</style>
+</head>
+<body>
+<div id="load" role="status" aria-live="polite"><div class="lo"><i class="e"></i><b class="o a"><i></i></b><b class="o b"><i></i></b></div><h1>Earth Analogs Explorer</h1><p>Earth sites that stand in for the Moon and Mars</p><div class="lb"><i id="lf"></i></div><p id="lt">Loading 3D engine…</p></div>
+<div id="bar"></div>
+<div id="hint">Drag to rotate · scroll / pinch to zoom · tap a planet to fly to it</div>
+<div id="tools"><input id="q" placeholder="Search sites…" autocomplete="off"></div>
+<div id="res"></div>
+<div id="panel"></div>
+<div id="toast"></div>
+<script src="textures.js"></script>
+<script src="vendor/three-0.128.0/three.min.js"></script><!-- three.js r128, MIT licence (vendor/three-0.128.0/LICENSE); local so the site works offline -->
+<script src="vendor/three-0.128.0/OrbitControls.js"></script>
+<script>if(!(window.THREE&&THREE.OrbitControls)){document.getElementById('load').classList.add('err');document.getElementById('lt').textContent='Could not load the 3D library (three.js) from the CDN. Check your internet connection and reload the page.'}</script>
+<script>
+/* =====================================================================
+   DATA LAYER. Everything the UI shows comes from one dataset object
+   (schema "earth-analogs/v1"), loaded from docs/data/sites.json. That file is
+   generated by pipeline/build_named_sites.py; edit pipeline/named_sites.json
+   and rerun it.
+   ===================================================================== */
+/* Named sites come from docs/data/sites.json, made by pipeline/build_named_sites.py from real data only. EMPTY is shown until it loads, or if it cannot be read. */
+const EMPTY={schema:'earth-analogs/v1',meta:{title:'Named-site dataset not loaded',status:'missing'},sources:{},metrics:[],bodies:{earth:{name:'Earth'},moon:{name:'Moon'},mars:{name:'Mars'}},sites:[]};
+let BASE=EMPTY;
+async function loadBase(){try{const r=await fetch('data/sites.json',{cache:'no-cache'});if(!r.ok)throw new Error('HTTP '+r.status);BASE=await r.json();setData(JSON.parse(JSON.stringify(BASE)))}catch(e){toast('Named sites not loaded: docs/data/sites.json could not be read ('+e.message+'). Run python pipeline/build_named_sites.py and open the site through a local server.')}}
+const TEX=Object.assign(/*TEX*/{}/*ENDTEX*/,window.TEXPACK||{}); /* lite file: textures come from textures.js next to it; missing ones fall back to flat colours */
+let DATA=null,S={};
+
+function validate(d){
+  const e=[],bad=(c,m)=>{if(!c)e.push(m)};
+  bad(d&&d.schema==='earth-analogs/v1','schema must be "earth-analogs/v1"');
+  if(e.length)return e;
+  bad(d.bodies&&d.bodies.earth&&d.bodies.moon&&d.bodies.mars,'bodies must include earth, moon, mars');
+  bad(Array.isArray(d.metrics)&&Array.isArray(d.sites),'metrics and sites must be arrays');
+  if(e.length)return e;
+  const ids=new Set(d.sites.map(s=>s.id)),mk=new Set(d.metrics.map(m=>m.key));
+  d.metrics.forEach(m=>bad(['num','text','tags'].includes(m.type),`metric ${m.key}: type must be num|text|tags`));
+  d.sites.forEach(s=>{
+    bad(d.bodies[s.body],`site ${s.id}: unknown body "${s.body}"`);
+    bad(typeof s.lat==='number'&&typeof s.lon==='number',`site ${s.id}: lat/lon must be numbers`);
+    bad(s.type==='target'||s.type==='analog',`site ${s.id}: type must be target|analog`);
+    Object.entries(s.metrics||{}).forEach(([k,v])=>{bad(mk.has(k),`site ${s.id}: metric "${k}" not in catalog`);bad(!v.source||d.sources[v.source],`site ${s.id}.${k}: unknown source "${v.source}"`)});
+    (s.analogs||[]).forEach(a=>bad(ids.has(a.id),`site ${s.id}: analog "${a.id}" not found`));
+  });
+      return e}
+
+function compare(t,an){
+  const A=S[an.id];let ws=0,sc=0;const rows=[];
+  for(const m of DATA.metrics){
+    const x=val(t,m.key),y=val(A,m.key);let sim=null;
+    if(x!=null&&y!=null){
+      if(m.type==='num')sim=1-Math.min(1,Math.abs(x-y)/(m.scale||1));
+      else if(m.type==='tags'){const a=new Set(x),b=new Set(y),i=[...a].filter(k=>b.has(k)).length;sim=i/(new Set([...a,...b]).size||1)}
+      const w=wt(m);if(sim!=null&&w>0){ws+=w;sc+=w*sim}}
+    rows.push({m,x,y,sim})}
+  return{rows,score:an.score!=null?an.score:(ws?sc/ws:null)}}
+const wt=m=>m.weight||0; /* weights come from the dataset only: equal per dimension, tags 0 */
+const forBody=(A,b)=>!A.analog_for||A.analog_for.includes(b),usualFor=A=>(A.analog_for||[]).map(b=>DATA.bodies[b]?DATA.bodies[b].name:b).join(' and ');
+const val=(s,k)=>s.metrics[k]?s.metrics[k].value:(k==='gravity'?DATA.bodies[s.body].gravity:null);
+const srcName=(s,k)=>{const m=s.metrics[k];return m?(DATA.sources[m.source]||{}).name||'unknown':'body data'};
+
+/* ---------- Scene ---------- */
+const VIS={earth:{R:5,pos:[0,0,0],spin:.0014,glow:0x5ab4ff,gs:1.09,gk:.85,ik:.6},moon:{R:1.5,pos:[15,0,-3],spin:.0004},mars:{R:2.8,pos:[-22,0,-8],spin:.0013,glow:0xff9a5a,gs:1.05,gk:.4,ik:.22}};
+/* Context-only bodies (not in the dataset): visual order of the Solar System */
+Object.assign(VIS,{
+ sun:{R:13,pos:[80,0,-18],spin:.0004,basic:1,deco:1,name:'Sun',fact:'Our star. It holds almost all of the Solar System’s mass.'},
+ mercury:{R:1.6,pos:[46,0,-10],spin:.0008,deco:1,n:1,name:'Mercury',fact:'Smallest planet and closest to the Sun; it has almost no atmosphere.'},
+ venus:{R:4.6,pos:[27,0,6],spin:.0005,deco:1,n:2,name:'Venus',glow:0xffd9a0,gs:1.06,gk:.35,ik:.18,fact:'Hottest planet, because its thick CO₂ atmosphere traps heat.'},
+ jupiter:{R:10,pos:[-56,0,-14],spin:.002,deco:1,n:5,name:'Jupiter',fact:'Largest planet. Its Great Red Spot is a long-lived storm.'},
+ saturn:{R:8.5,pos:[-94,0,-20],spin:.0018,deco:1,n:6,name:'Saturn',fact:'Famous for its rings, made mostly of water ice.'},
+ uranus:{R:5.5,pos:[-128,0,-26],spin:.0012,deco:1,n:7,name:'Uranus',glow:0x9fe8ff,gs:1.05,gk:.3,ik:.2,fact:'An ice giant that rotates on its side.'},
+ neptune:{R:5.4,pos:[-154,0,-30],spin:.0012,deco:1,n:8,name:'Neptune',glow:0x5a7bff,gs:1.05,gk:.35,ik:.22,fact:'The farthest planet, with the fastest winds in the Solar System.'}});
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputEncoding=THREE.sRGBEncoding;document.body.prepend(renderer.domElement);
+const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(50,1,.05,3000),controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true;controls.dampingFactor=.07;controls.zoomSpeed=1.3;controls.maxDistance=700;controls.minDistance=2;
+const OV={get tgt(){return new THREE.Vector3(-33,0,-8)},get pos(){const d=Math.min(600,Math.max(90,138/(Math.tan(25*Math.PI/180)*camera.aspect)));return new THREE.Vector3(-33,d*.3,d*.95)}};
+scene.add(new THREE.AmbientLight(0x8899bb,.3));
+const sun=new THREE.PointLight(0xffffff,1.8,0,0);sun.position.set(80,0,-18);scene.add(sun);
+const fill=new THREE.DirectionalLight(0x9db4ff,.45);fill.position.set(0,25,100);scene.add(fill);
+const FALL={earth:'#2a5d9f',moon:'#999',mars:'#b5532f',sun:'#ffb347',mercury:'#8a8178',venus:'#d9b77a',jupiter:'#c9a47c',saturn:'#d8c28c',uranus:'#9fdce6',neptune:'#4a6fd8',sky:'#05070d',clouds:'#000',rings:'#cbbd9c'};
+/* Loading screen: counts textures as they decode. LD.start() runs once the scene is built. */
+const LD=(()=>{const g=id=>document.getElementById(id),MIN=600,SAFE=20000;let n=0,d=0,go=false,done=false;const t0=performance.now();
+ function ui(){g('lf').style.width=(n?10+d/n*86:96)+'%';if(n)g('lt').textContent='Decoding textures '+d+' of '+n+'…'}
+ function end(){if(done)return;done=true;
+  setTimeout(()=>requestAnimationFrame(()=>requestAnimationFrame(()=>{g('lf').style.width='100%';g('lt').textContent='Ready';g('load').classList.add('off');setTimeout(()=>g('load').remove(),800);flyTo(OV.pos,OV.tgt,2)})),Math.max(0,MIN-(performance.now()-t0)))}
+ const chk=()=>{if(go&&d>=n)end()};
+ return{add(){n++},hit(){d++;ui();chk()},start(){go=true;if(!n)toast('Textures not found: showing flat colours. Keep textures.js in the same folder as this file.');ui();chk();setTimeout(end,SAFE)}}})();
+const ASSET_TEX={earth:'assets/textures/earth.jpg',clouds:'assets/textures/clouds.jpg',moon:'assets/textures/moon.jpg',mars:'assets/textures/mars.jpg',sky:'assets/textures/sky.jpg',sun:'assets/textures/sun.jpg',mercury:'assets/textures/mercury.jpg',venus:'assets/textures/venus.jpg',jupiter:'assets/textures/jupiter.jpg',saturn:'assets/textures/saturn.jpg',rings:'assets/textures/rings.png',uranus:'assets/textures/uranus.jpg',neptune:'assets/textures/neptune.jpg'};
+const TL=new THREE.TextureLoader(),tex=k=>{const url=ASSET_TEX[k],b64=TEX[k];let t;if(url){LD.add();t=TL.load(url,LD.hit,undefined,()=>{if(b64){const fb=TL.load(b64,LD.hit,undefined,LD.hit);t.image=fb.image;t.needsUpdate=true}else LD.hit()})}else if(b64){LD.add();t=TL.load(b64,LD.hit,undefined,LD.hit)}else{const c=document.createElement('canvas');c.width=c.height=4;const g=c.getContext('2d');g.fillStyle=FALL[k]||'#888';g.fillRect(0,0,4,4);t=new THREE.CanvasTexture(c)}t.anisotropy=8;if(k!=='clouds')t.encoding=THREE.sRGBEncoding;return t};
+const ll=(lat,lon,R)=>{const a=lat*Math.PI/180,b=lon*Math.PI/180;return new THREE.Vector3(R*Math.cos(a)*Math.cos(b),R*Math.sin(a),-R*Math.cos(a)*Math.sin(b))};
+{const sk=tex('sky');scene.add(new THREE.Mesh(new THREE.SphereGeometry(1800,64,32),new THREE.MeshBasicMaterial({map:sk,side:THREE.BackSide,depthWrite:false})));
+ const q=document.createElement('canvas');q.width=q.height=32;const qg=q.getContext('2d'),gr=qg.createRadialGradient(16,16,0,16,16,16);
+ [[0,'rgba(255,255,255,1)'],[.3,'rgba(255,255,255,.6)'],[1,'rgba(255,255,255,0)']].forEach(a=>gr.addColorStop(a[0],a[1]));qg.fillStyle=gr;qg.fillRect(0,0,32,32);
+ const st=new THREE.CanvasTexture(q),dpr=renderer.getPixelRatio();var STARTEX=st;
+ const layer=(n,size,b0)=>{const p=[],col=[];for(let i=0;i<n;i++){const u=Math.random()*2-1,a=Math.random()*6.283,s=Math.sqrt(1-u*u);p.push(1700*s*Math.cos(a),1700*u,1700*s*Math.sin(a));
+   const b=b0+Math.random()*(1-b0),k=Math.random(),w=k<.3?[.78,.88,1]:k>.75?[1,.84,.68]:[1,1,1];col.push(w[0]*b,w[1]*b,w[2]*b)}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  scene.add(new THREE.Points(g,new THREE.PointsMaterial({size:size*dpr,map:st,vertexColors:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:false})))};
+ layer(5000,3.2,.2);layer(350,6.5,.6);
+ const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d'),r=g.createRadialGradient(128,128,0,128,128,128);
+ [[0,'rgba(255,255,245,1)'],[.1,'rgba(255,244,210,.95)'],[.28,'rgba(255,205,130,.25)'],[1,'rgba(255,160,60,0)']].forEach(a=>r.addColorStop(a[0],a[1]));g.fillStyle=r;g.fillRect(0,0,256,256);
+ const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));sp.position.set(80,0,-18);sp.scale.setScalar(120);scene.add(sp);var SUNSP=sp}
+const glowMat=(c,k,s,m)=>new THREE.ShaderMaterial({uniforms:{c:{value:new THREE.Color(c)},k:{value:k},a:{value:Math.sqrt(1-1/(s*s))||1},m:{value:m}},
+ vertexShader:'varying vec3 n;void main(){n=normalize(normalMatrix*normal);gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+ fragmentShader:'uniform vec3 c;uniform float k,a,m;varying vec3 n;void main(){float i=m>.5?pow(clamp(1.-n.z,0.,1.),3.):pow(clamp(-n.z/a,0.,1.),2.2);i*=k;gl_FragColor=vec4(c*i,i);}',
+ side:m>.5?THREE.FrontSide:THREE.BackSide,blending:THREE.AdditiveBlending,transparent:true,depthWrite:false});
+const meshes=[],markers=[];let clouds,hov=null;
+for(const id of Object.keys(VIS)){const v=VIS[id],m=new THREE.Mesh(new THREE.SphereGeometry(v.R,96,64),v.basic?new THREE.MeshBasicMaterial({map:tex(id)}):new THREE.MeshStandardMaterial({map:tex(id),roughness:.95,metalness:0}));
+  m.position.set(...v.pos);m.userData={kind:'body',id};v.mesh=m;scene.add(m);meshes.push(m);
+  if(v.glow){m.add(new THREE.Mesh(new THREE.SphereGeometry(v.R*v.gs,64,48),glowMat(v.glow,v.gk,v.gs,0)));m.add(new THREE.Mesh(new THREE.SphereGeometry(v.R*1.003,64,48),glowMat(v.glow,v.ik,1,1)))}
+  if(id==='earth'){clouds=new THREE.Mesh(new THREE.SphereGeometry(v.R*1.012,64,48),new THREE.MeshStandardMaterial({color:0xffffff,alphaMap:tex('clouds'),transparent:true,opacity:.7,depthWrite:false,roughness:1}));m.add(clouds)}
+  const el=document.createElement('div');el.className='lbl'+(v.deco?' dim':'');el.onclick=()=>focusBody(id);document.body.appendChild(el);v.label=el}
+
+{const v=VIS.saturn,a=v.R*1.25,g=new THREE.RingGeometry(a,v.R*2.3,128,1),p=g.attributes.position,u=g.attributes.uv,w=new THREE.Vector3();
+ for(let i=0;i<p.count;i++){w.fromBufferAttribute(p,i);u.setXY(i,(w.length()-a)/(v.R*1.05),0.5)}
+ const rm=new THREE.Mesh(g,new THREE.MeshBasicMaterial({map:tex('rings'),color:0xe6dccb,side:THREE.DoubleSide,transparent:true,depthWrite:false})),gp=new THREE.Group();
+ rm.rotation.x=Math.PI/2;gp.add(rm);gp.position.set(...v.pos);gp.rotation.z=.42;scene.add(gp)}
+/* ---------- Alive: orbit guides, asteroid belt, Moon orbit, comet ---------- */
+const SUNP=new THREE.Vector3(80,0,-18),ringsG=new THREE.Group(),MO={r:Math.hypot(15,-3),a:Math.atan2(-3,15)},dprx=renderer.getPixelRatio();
+const circle=(cx,cz,r)=>{const p=[];for(let i=0;i<=256;i++){const a=i/256*6.2832;p.push(new THREE.Vector3(cx+r*Math.cos(a),0,cz+r*Math.sin(a)))}
+  return new THREE.Line(new THREE.BufferGeometry().setFromPoints(p),new THREE.LineBasicMaterial({color:0x5b7fb8,transparent:true,opacity:.2}))};
+for(const id of ['mercury','venus','earth','mars','jupiter','saturn','uranus','neptune']){const q=VIS[id].pos;ringsG.add(circle(SUNP.x,SUNP.z,Math.hypot(q[0]-SUNP.x,q[2]-SUNP.z)))}
+ringsG.add(circle(0,0,MO.r));scene.add(ringsG);
+const belt=(()=>{const p=[],c=[];for(let i=0;i<3500;i++){const a=Math.random()*6.2832,r=112+Math.random()*15,b=.35+Math.random()*.5;p.push(SUNP.x+r*Math.cos(a),(Math.random()-.5)*3,SUNP.z+r*Math.sin(a));c.push(b,b*.9,b*.78)}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('color',new THREE.Float32BufferAttribute(c,3));
+  const pt=new THREE.Points(g,new THREE.PointsMaterial({size:2.6*dprx,map:STARTEX,vertexColors:true,transparent:true,depthWrite:false,sizeAttenuation:false})),gp=new THREE.Group();
+  gp.position.copy(SUNP);pt.position.copy(SUNP).negate();gp.add(pt);scene.add(gp);return gp})();
+const CN=70,cp=new Float32Array(CN*3),cc=new Float32Array(CN*3),cg=new THREE.BufferGeometry();
+cg.setAttribute('position',new THREE.BufferAttribute(cp,3));cg.setAttribute('color',new THREE.BufferAttribute(cc,3));
+const ctail=new THREE.Points(cg,new THREE.PointsMaterial({size:6*dprx,map:STARTEX,vertexColors:true,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,sizeAttenuation:false}));ctail.frustumCulled=false;ctail.visible=false;scene.add(ctail);
+const chead=new THREE.Sprite(new THREE.SpriteMaterial({map:STARTEX,color:0xcfeaff,blending:THREE.AdditiveBlending,transparent:true,depthWrite:false}));chead.scale.setScalar(5);chead.visible=false;scene.add(chead);
+const C={t:99,dur:18,wait:25,A:new THREE.Vector3(),B:new THREE.Vector3()};
+function cometTick(dt){C.t+=dt;
+  if(C.t>=C.dur+C.wait){C.t=0;C.A.set(140+Math.random()*50,30+Math.random()*50,-130+Math.random()*50);C.B.set(-230-Math.random()*60,-20+Math.random()*50,-60+Math.random()*50);for(let i=0;i<CN;i++){cp[i*3]=C.A.x;cp[i*3+1]=C.A.y;cp[i*3+2]=C.A.z}}
+  const on=C.t<C.dur;ctail.visible=chead.visible=on;if(!on)return;
+  const k=C.t/C.dur,fd=k<.1?k*10:k>.9?(1-k)*10:1;chead.position.lerpVectors(C.A,C.B,k);cp.copyWithin(3,0);cp[0]=chead.position.x;cp[1]=chead.position.y;cp[2]=chead.position.z;
+  for(let i=0;i<CN;i++){const f=Math.pow(1-i/CN,2.2)*fd;cc[i*3]=.6*f;cc[i*3+1]=.8*f;cc[i*3+2]=f}
+  chead.material.opacity=fd;cg.attributes.position.needsUpdate=cg.attributes.color.needsUpdate=true}
+/* Site markers: a small flat pin lying on the surface (dark halo, coloured dot, outline ring) with a slow ping ring.
+   Amber = Moon/Mars target, blue = Earth analog. An invisible sphere around each pin makes it easy to click. */
+function mkDisc(r0,r1,c,o){return new THREE.Mesh(r0?new THREE.RingGeometry(r0,r1,48):new THREE.CircleGeometry(r1,32),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:o,depthWrite:false,side:THREE.DoubleSide}))}
+function mkPin(R,up,c,big){const g=new THREE.Group(),k=big?1.25:1,
+  parts=[mkDisc(0,R*.026*k,0x0b0c0f,.55),mkDisc(R*.017*k,R*.021*k,c,.95),mkDisc(0,R*.0095*k,c,1),mkDisc(R*.017*k,R*.0195*k,c,.6)];
+  parts.forEach((m,n)=>{m.renderOrder=6+n;m.position.z=n*R*.0004;g.add(m)});
+  g.position.copy(up.clone().multiplyScalar(R*1.015));g.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),up);g.userData.ping=parts[3];return g}
+function pingTick(g,now,ph){const u=(now/1700+ph)%1,p=g.userData.ping;p.scale.setScalar(1+u*1.5);p.material.opacity=.55*(1-u)}
+function rebuildMarkers(){
+  markers.forEach(m=>{m.parent.remove(m.userData.ring);m.parent.remove(m);m.userData.lbl.remove()});markers.length=0;hov=null;
+  for(const s of DATA.sites){const v=VIS[s.body],c=s.type==='target'?0xffc857:0x5ec8ff,up=ll(s.lat,s.lon,1).normalize(),
+    ring=mkPin(v.R,up,c,s.type==='target'),
+    mk=new THREE.Mesh(new THREE.SphereGeometry(v.R*.03,10,8),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
+    mk.position.copy(ring.position);
+    const lb=document.createElement('div');lb.className='mlbl'+(s.type==='target'?'':' an');lb.textContent=s.name;lb.onclick=()=>focusBody(s.body,s.id);document.body.appendChild(lb);
+    mk.userData={kind:'site',key:s.id,ring,lbl:lb,ph:Math.random()};mk.visible=ring.visible=false;v.mesh.add(mk);v.mesh.add(ring);markers.push(mk)}}
+
+/* ---------- Navigation ---------- */
+let ABOUT=false,BPICK=false,METH=false,focused=null,tween=null,sel=null,shift=0,shiftT=0,shiftY=0,shiftYT=0,panelMode=innerWidth>=860,panelDrag=null;
+const $=id=>document.getElementById(id),bar=$('bar'),panel=$('panel'),hint=$('hint'),TOOLS=$('tools');
+function flyTo(pos,tgt,minD){tween={t0:performance.now(),dur:1500,p0:camera.position.clone(),a:controls.target.clone(),p1:pos,b:tgt,minD};controls.minDistance=Math.min(controls.minDistance,minD)}
+function setMarkers(){markers.forEach(m=>{const v=S[m.userData.key].body===focused;m.visible=m.userData.ring.visible=v;m.userData.ring.scale.setScalar(sel===m.userData.key?1.35:hov===m?1.2:1)});if(PK&&PK.pin)PK.pin.visible=PK.body===focused}
+function panelOffset(){return panel.style.display==='block'&&innerWidth>=860?panel.getBoundingClientRect().width/2+7:0}
+function openPanel(h){ABOUT=BPICK=METH=false;if(!EF.keep&&!GIS.keep){efHide();gisHide()}panel.className='';panel.innerHTML=`<div id="panelGrip" role="separator" tabindex="0" aria-label="Resize panel"></div><button id="x" onclick="overview()" aria-label="Close">×</button>`+h;panel.style.display='block';panel.scrollTop=0;shiftT=panelOffset();shiftYT=innerWidth<860?innerHeight*.19:0;const grip=$('panelGrip');grip.setAttribute('aria-orientation',innerWidth>=860?'vertical':'horizontal')}
+function overview(){ABOUT=BPICK=METH=false;gisHide();efHide();focused=sel=null;panel.style.display='none';shiftT=shiftYT=0;hint.style.display='';setMarkers();buildBar();flyTo(OV.pos.clone(),OV.tgt.clone(),2)}
+panel.addEventListener('pointerdown',e=>{if(e.target.id!=='panelGrip')return;e.preventDefault();const desktop=innerWidth>=860;panelDrag={id:e.pointerId,desktop,x:e.clientX,y:e.clientY,width:panel.getBoundingClientRect().width,height:panel.getBoundingClientRect().height};e.target.setPointerCapture(e.pointerId)});
+panel.addEventListener('pointermove',e=>{if(!panelDrag||panelDrag.id!==e.pointerId)return;const d=panelDrag;if(d.desktop){const max=Math.min(960,innerWidth*.8),min=Math.min(320,max);panel.style.width=Math.max(min,Math.min(max,d.width+d.x-e.clientX))+'px';shiftT=panelOffset()}else{const max=Math.min(innerHeight*.88,innerHeight-24),min=Math.min(180,max);panel.style.height=Math.max(min,Math.min(max,d.height+d.y-e.clientY))+'px'}});
+panel.addEventListener('pointerup',e=>{if(panelDrag&&panelDrag.id===e.pointerId)panelDrag=null});
+panel.addEventListener('pointercancel',e=>{if(panelDrag&&panelDrag.id===e.pointerId)panelDrag=null});
+panel.addEventListener('keydown',e=>{if(e.target.id!=='panelGrip')return;const desktop=innerWidth>=860;if(desktop&&e.key!=='ArrowLeft'&&e.key!=='ArrowRight'||!desktop&&e.key!=='ArrowUp'&&e.key!=='ArrowDown')return;e.preventDefault();const step=e.shiftKey?40:16,rect=panel.getBoundingClientRect();if(desktop){const max=Math.min(960,innerWidth*.8),min=Math.min(320,max),grow=e.key==='ArrowLeft'?step:-step;panel.style.width=Math.max(min,Math.min(max,rect.width+grow))+'px';shiftT=panelOffset()}else{const max=Math.min(innerHeight*.88,innerHeight-24),min=Math.min(180,max),grow=e.key==='ArrowUp'?step:-step;panel.style.height=Math.max(min,Math.min(max,rect.height+grow))+'px'}});
+function focusBody(id,key,aid){
+  focused=id;sel=key||null;const v=VIS[id],c=v.mesh.position.clone();let dir,dist;
+  if(key){const s=S[key];dir=v.mesh.localToWorld(ll(s.lat,s.lon,v.R)).sub(c).normalize();dist=v.R*(innerWidth<860?5.2:2.7)}
+  else{dir=camera.position.clone().sub(c).normalize();dist=v.R*(innerWidth<860?5.2:3.8)}
+  setMarkers();buildBar();hint.style.display='none';flyTo(c.clone().add(dir.multiplyScalar(dist)),c,v.R*1.2);
+  if(GIS.active){gisRenderPanel();return}
+  key?showSite(key,aid,!!aid):showBody(id)}
+function buildBar(){
+  bar.innerHTML='';
+  [['','Overview'],['earth','Earth'],['moon','Moon'],['mars','Mars']].forEach(([id,t])=>{
+    const b=document.createElement('button');b.textContent=t;b.className=(!GIS.active&&(focused||'')===id)?'on':'';
+    b.onclick=()=>{if(GIS.active)gisHide();id?focusBody(id):overview()};bar.appendChild(b)
+  });
+  const gb=document.createElement('button');gb.textContent='GIS';gb.className=GIS.active?'on':'';
+  gb.onclick=()=>{if(GIS.active)overview();else gisOpen(focused&&['earth','moon','mars'].includes(focused)?focused:'earth')};
+  bar.appendChild(gb);
+  bar.appendChild(TOOLS);bar.insertAdjacentHTML('beforeend','<span class="sp"></span>');
+  const ab=document.createElement('button');ab.textContent='About';ab.className=ABOUT?'on':'';ab.title='What this is, who it is for and how to use it';ab.onclick=()=>showAbout();bar.appendChild(ab);
+  if(window.BP){const pb=document.createElement('button');pb.textContent='Base plan';pb.className=BPICK?'on':'';pb.title='Plan a base at a Moon or Mars site';pb.onclick=()=>planPick();bar.appendChild(pb)}
+  const mb=document.createElement('button');mb.textContent='Method';mb.className=METH?'on':'';mb.title='How matches are calculated, and how well the score finds known analog sites';mb.onclick=()=>showMethod();bar.appendChild(mb);
+  if(DATA.meta.status!=='real'){const p=document.createElement('span');p.id='pill';p.textContent=DATA.meta.status==='missing'?'Named sites: not loaded':'Named sites: not real data';p.title=DATA.meta.title||'';bar.appendChild(p)}}
+/* Base plan from the top bar: pick a Moon or Mars site, then its panel opens on the Base plan tab. */
+function planPick(){const tg=DATA.sites.filter(s=>s.type==='target');if(!tg.length){toast('No candidate sites loaded');return}
+  openPanel(`<div class="kick">Base plan</div><h2>Plan a base</h2><div class="sub">Pick a candidate site. The plan uses that site's real terrain map, sunlight data where it exists, and the numbers you type in. Nothing is filled in without a source.</div>
+  ${['moon','mars'].map(b=>{const l=tg.filter(s=>s.body===b);return l.length?`<div class="grp">${esc(DATA.bodies[b].name)}</div>`+l.map(s=>`<button class="card" onclick="planOpen('${s.id}')"><span>${esc(s.name)}</span><b>plan</b></button>`).join(''):''}).join('')}`);
+  BPICK=true;buildBar()}
+/* About: purpose, who it serves, how to use it, limits. Text only: every number in the app lives in the panels it describes. */
+function showAbout(){
+  openPanel(`<div class="kick">About</div><h2>Earth Analogs Explorer</h2>
+  <div class="sub">Which places on Earth have ground most like a chosen place on the Moon or Mars, and where does Earth have no match at all?</div>
+  <div class="grp">Purpose</div>
+  <div class="mp">Teams test rovers, landers, instruments, suits and procedures at Earth "analog" sites before a mission. Those sites are often picked by tradition or access. This tool picks them from measurements: it measures every place on Earth, the Moon and Mars the same way, from NASA, USGS and NOAA data, and ranks Earth against any point you choose.</div>
+  <div class="mp">It also shows the opposite: where Earth cannot stand in. That tells a team which tests need a vacuum chamber, a thermal chamber or a flight, not a field trip.</div>
+  <div class="grp">For scientists and engineers</div>
+  <div class="mp"><b>Find a test site.</b> Click a candidate site or any point, then <b>Find similar places on Earth</b>. You get the closest places on Earth with country and province, their rank among all of Earth, and which measurements make them alike or not.</div>
+  <div class="mp"><b>Ask one question.</b> In Find on Earth, pick a question: Rover mobility, Landing hazard or Thermal cycling. Only the measurements that matter for it are used, and the panel says whether Earth has a close analog for that question.</div>
+  <div class="mp"><b>See the limits.</b> GIS, then an Earth Analog layer, maps the best match Earth can reach for every point on the Moon or Mars.</div>
+  <div class="mp"><b>Check the method.</b> Method shows the formula, every source, and a backtest: where known analog sites rank among all of Earth.</div>
+  <div class="mp"><b>Plan a base.</b> Base plan lays out a habitat, solar field, landing pad and roads on real terrain at a candidate site, sized from your numbers or from NASA mission documents.</div>
+  <div class="grp">For students and learners</div>
+  <div class="mp">Fly between Earth, the Moon and Mars and click anywhere to see real mission data: how steep, how rough, how hot and cold, how bright. Compare a lunar crater with Antarctica or Jezero with a desert, and read why they match or don't. Every value names the mission and instrument that measured it.</div>
+  <div class="grp">How to start</div>
+  <div class="mp">1. Click <b>Moon</b> or <b>Mars</b>, then click a marker or anywhere on the surface.<br>2. Press <b>Find similar places on Earth</b>, then try a question preset.<br>3. Open <b>GIS</b> or <b>Method</b> to see the maps and how the score works.</div>
+  <div class="grp">What it cannot tell you</div>
+  <div class="mp">Earth has no matching gravity, vacuum, radiation or thin CO₂ air. A high score covers only the measured ground, averaged over squares about 111 km wide. The scales and the "close analog" cut-offs are our own choices. Where no real measurement exists, the app says "No sourced value" and never guesses.</div>
+  <div class="note2">Read more: <a class="lnk" href="FEATURE_GUIDE.md" target="_blank" rel="noopener">every feature and term</a> · <a class="lnk" href="PLAIN_GUIDE.md" target="_blank" rel="noopener">plain-language guide</a> · <a class="lnk" href="LIMITATIONS.md" target="_blank" rel="noopener">honest limitations</a> · <a class="lnk" href="SOURCES_AND_METHODS.md" target="_blank" rel="noopener">every source and processing step</a></div>
+  <div class="note2">${esc(CREDITS)}</div>
+  <div class="btns"><button class="pri" onclick="overview();focusBody('moon')">Start with the Moon</button><button onclick="overview();focusBody('mars')">Start with Mars</button></div>`);
+  ABOUT=true;buildBar();try{localStorage.setItem('about-seen','1')}catch(e){}}
+function planOpen(id){gisHide();efHide();TB.want='plan';focusBody(S[id].body,id)}
+function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',6000)}
+function setData(d){const e=validate(d);if(e.length){toast('Dataset rejected:\n'+e.slice(0,6).join('\n'));return false}
+  DATA=d;S={};d.sites.forEach(s=>S[s.id]=s);
+  for(const id of Object.keys(VIS))VIS[id].label.textContent=d.bodies[id]?d.bodies[id].name:VIS[id].name;
+  rebuildMarkers();focused=sel=null;panel.style.display='none';shiftT=shiftYT=0;hint.style.display='';buildBar();return true}
+
+/* ---------- Panels ---------- */
+/* Radar: one axis per numeric metric (set "radar":false on a metric to leave it out). Each axis is scaled between the lowest and highest value in the whole dataset. */
+function radar(t,A){
+  const ms=DATA.metrics.filter(m=>m.type==='num'&&m.radar!==false&&val(t,m.key)!=null&&val(A,m.key)!=null);
+  if(ms.length<3)return '';
+  const R=105,n=ms.length,ang=i=>-Math.PI/2+i*2*Math.PI/n,pt=(i,f)=>[Math.cos(ang(i))*R*f,Math.sin(ang(i))*R*f],f1=a=>a.map(x=>x.toFixed(1)).join(',');
+  const nz=(m,v)=>{const a=DATA.sites.map(s=>val(s,m.key)).filter(x=>x!=null),lo=Math.min(...a),hi=Math.max(...a);return hi>lo?(v-lo)/(hi-lo):.5};
+  const poly=s=>ms.map((m,i)=>f1(pt(i,.04+.96*nz(m,val(s,m.key))))).join(' ');
+  const dots=(s,c)=>ms.map((m,i)=>{const p=pt(i,.04+.96*nz(m,val(s,m.key))),v=val(s,m.key);return `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.4" fill="${c}"><title>${s.name} · ${m.label}: ${v.toLocaleString(undefined,{maximumFractionDigits:3})} ${m.unit||''}</title></circle>`}).join('');
+  const rings=[.25,.5,.75,1].map(f=>`<polygon points="${ms.map((_,i)=>f1(pt(i,f))).join(' ')}" fill="none" stroke="var(--line)" stroke-width="1"/>`).join('');
+  const axes=ms.map((m,i)=>{const e=pt(i,1),l=pt(i,1.16),c=Math.cos(ang(i));
+    return `<line x1="0" y1="0" x2="${e[0].toFixed(1)}" y2="${e[1].toFixed(1)}" stroke="var(--line)"/><text x="${l[0].toFixed(1)}" y="${(l[1]+4).toFixed(1)}" text-anchor="${c>.3?'start':c<-.3?'end':'middle'}">${m.label}</text>`}).join('');
+  return `<div class="grp">Profile overlay</div><div class="radar"><svg viewBox="-190 -150 380 300" role="img" aria-label="Radar chart comparing ${t.name} and ${A.name}">${rings}${axes}
+    <polygon class="p" points="${poly(t)}" fill="var(--gold)" fill-opacity=".22" stroke="var(--gold)" stroke-width="2" stroke-linejoin="round"/>
+    <polygon class="p" points="${poly(A)}" fill="var(--acc)" fill-opacity=".22" stroke="var(--acc)" stroke-width="2" stroke-linejoin="round"/>
+    <g class="p">${dots(t,'var(--gold)')}${dots(A,'var(--acc)')}</g></svg>
+    <div class="leg"><span style="--c:var(--gold)">${t.name}</span><span style="--c:var(--acc)">${A.name}</span></div>
+    <div class="note">More overlap means more alike. Axes span the dataset’s lowest to highest value.</div></div>`}
+const pct=s=>s==null?'—':Math.round(s*100)+'%',cap=s=>s[0].toUpperCase()+s.slice(1);
+const cell=(m,v,o)=>v==null?'<span class="na">no sourced value</span>':m.type==='num'?fVal(v,m):m.type==='tags'?v.map(k=>`<span class="tg${o&&o.includes(k)?' sh':''}">${k}</span>`).join(''):v;
+const coords=s=>efLL(s.lat,s.lon);
+const mockBanner=()=>DATA.meta.status==='real'?'':DATA.meta.status==='missing'?'<div class="mockline">Named-site dataset not loaded</div>':'<div class="mockline">Illustrative mock data</div>';
+const head=t=>`<div class="kick">${DATA.bodies[t.body].name} · ${t.type==='target'?'candidate site':'analog site'}</div><h2>${t.name}</h2><div class="sub" title="${esc(t.coord_src||'')}">${coords(t)}</div>${t.type==='target'?'':mockBanner()}`;
+const namedMock=()=>DATA.meta.status==='real'?'':DATA.meta.status==='missing'?'<div class="mockline">Named-site dataset not loaded</div>':'<div class="mockline">Named-site values are illustrative mock data, not measurements</div>';
+const groups=rows=>{const g=[...new Set(DATA.metrics.map(m=>m.group||'Data'))];return g.map(n=>({n,r:rows.filter(r=>(r.m.group||'Data')===n&&(r.x!=null||r.y!=null))})).filter(x=>x.r.length)};
+function showDeco(id){const v=VIS[id],o=['','1st','2nd','3rd','4th','5th','6th','7th','8th'][v.n||0];
+  openPanel(`<div class="kick">${v.n?o+' planet from the Sun':'Our star'}</div><h2>${v.name}</h2><div class="sub">${v.fact}</div>
+  <div class="note2" style="margin-top:14px">Shown for context only. Not part of the analog comparison; sizes and distances are not to scale.</div>
+  <div class="btns"><button onclick="overview()">Back to overview</button><button onclick="focusBody('earth')">Go to Earth</button></div>`)}
+function showBody(id){const b=DATA.bodies[id];if(!b)return showDeco(id);
+  openPanel(`<div class="kick">Planetary body</div><h2>${b.name}</h2><div class="sub">${b.summary||''}</div>${mockBanner()}
+  ${PK_BODIES.includes(id)?`<div class="tabhint">Click anywhere on the ${esc(b.name)} to see the terrain around that point and find the most similar places on Earth.</div>`:''}
+  <div class="grp">Key facts</div>${(b.facts||[]).map(f=>`<div class="mr one"><div class="ml">${f.label}</div><div class="mv">${f.value}</div></div>`).join('')}
+  <div class="grp">Sites</div>${DATA.sites.filter(s=>s.body===id).map(s=>`<button class="card" onclick="focusBody('${id}','${s.id}')"><span>${s.name}</span><b>${s.type==='target'?'candidate':'analog'}</b></button>`).join('')}`)}
+function showSite(id,aid,asNamed){
+  const t=S[id];
+  if(t.type==='target'){
+    const lst=(t.analogs||[]).map(a=>({a,A:S[a.id],c:compare(t,a)})),ids=new Set(lst.map(x=>x.a.id)),
+      rank=f=>DATA.sites.filter(s=>s.type==='analog'&&!ids.has(s.id)&&f(s)).map(A=>{const a={id:A.id,why:autoWhy(t,A)};return{a,A,c:compare(t,a),auto:true,alt:!forBody(A,t.body)}}).sort((p,q)=>(q.c.score||0)-(p.c.score||0)),
+      aut=rank(s=>forBody(s,t.body)).slice(0,3),alt=rank(s=>!forBody(s,t.body)).slice(0,3),an=[...lst,...aut,...alt];
+    if(!an.length){openPanel(head(t)+`<p class="sub">${t.summary||''}</p>`);return}
+    const cur=an.find(x=>x.a.id===aid)||(lst.length?lst:an).reduce((p,q)=>(q.c.score||0)>(p.c.score||0)?q:p),A=cur.A,E=DATA.bodies[A.body];if(!CUR||CUR.id!==id||TB.want){TB.v=TB.want||'match';TB.want=null;TB.cmp='p0'}if(asNamed)TB.cmp='n';CUR={id,aid:cur.a.id};const named=TB.cmp==='n';
+    const chip=x=>`<button class="chip${named&&x===cur?' on':''}${x.auto?' auto':''}${x.alt?' alt':''}" onclick="setCmp('${id}','n:${x.a.id}')"${x.alt?` title="Usually studied as a ${esc(usualFor(x.A))} analog"`:''}>${x.A.name}${x.alt?`<small class="uf">${esc(usualFor(x.A))}</small>`:''}<b data-a="${x.a.id}">${pct(x.c.score)}</b></button>`;
+    const tab=TB.v,
+    hero=`<div class="hero"><div class="ht"><b>Where on Earth is most like ${t.name}?</b><span>Scores every place on the planet against this site and paints the best matches on the globe.</span></div><button class="go" onclick="efStart('${t.id}')">Find on Earth</button></div>`,
+    tabsH=`<div class="tabs" role="tablist">${[['match','Match'],['profile','Profile'],['data','Data'],...(window.BP?[['plan','Base plan']]:[])].map(([k,l])=>`<button role="tab" aria-selected="${tab===k}" class="${tab===k?'on':''}" onclick="setTab('${k}')">${l}</button>`).join('')}</div>`,
+    matchH=`<div id="mbest"></div><div class="grp">Named analog sites</div>${namedMock()}<div class="tabhint" style="margin-top:8px">Earth sites the team curated for this target. Pick one to compare it in the circle below.</div><div class="chips" style="margin-top:8px">${lst.map(chip).join('')}</div>${aut.length?`<div class="alsol">Also consider · auto-ranked among ${DATA.bodies[t.body].name} analog sites</div><div class="chips" style="margin-top:6px">${aut.map(chip).join('')}</div>`:''}${alt.length?`<div class="alsol">Similar terrain · usually studied for another body</div><div class="tabhint" style="margin-top:4px">These sites score well on the measurements but are known as analogs for ${alt.length>1?'other bodies':esc(usualFor(alt[0].A))}. Useful for terrain tests; check whether they fit your mission.</div><div class="chips" style="margin-top:6px">${alt.map(chip).join('')}</div>`:''}
+    ${named?`<div class="vs"><div class="side"><div class="kick">${DATA.bodies[t.body].name} target</div><h3>${t.name}</h3><p>${t.summary||''}</p></div>
+    <div class="donut" style="--p:${Math.round((cur.c.score||0)*100)}"><span>${pct(cur.c.score)}</span><small>MATCH</small></div>
+    <div class="side an"><div class="kick">${E.name} analog</div><h3>${A.name}</h3><p>${A.summary||''}</p></div></div>
+    <div class="note2" style="text-align:center;margin:-4px 0 10px"><button class="lnk" onclick="showMethod()">How is this score calculated?</button></div>
+    ${cur.a.why?`<div class="why">${cur.a.why}</div>`:''}<div class="note2" id="rk-${cur.a.id}"></div>
+    ${covHTML(t,A)}`:'<div id="mvs"><div class="note2">Scoring every place on Earth…</div></div>'}
+    `,
+    cmpSel=`<div class="cmpsel"><label for="cmp">Compare ${t.name} with</label><select id="cmp" onchange="setCmp('${id}',this.value)">
+      <optgroup label="Most similar places on Earth (real data)" id="cmp-places">${named?'<option value="p0">Most similar place on Earth</option>':`<option value="${TB.cmp}" selected>Loading…</option>`}</optgroup>
+      <optgroup label="Named analog sites">${an.map(x=>`<option value="n:${x.a.id}"${named&&x===cur?' selected':''}>${x.A.name}</option>`).join('')}</optgroup></select></div>`,
+    profileH=cmpSel+(named?`${namedMock()}<div class="tabhint">How ${t.name} and ${A.name} overlap across the measurements.</div>${radar(t,A)||'<div class="sub" style="margin-top:14px">Not enough shared numeric measurements to draw a profile.</div>'}`:'<div id="cmpb"><div class="note2">Scoring every place on Earth…</div></div>'),
+    dataH=cmpSel+(!named?'<div id="cmpb"><div class="note2">Scoring every place on Earth…</div></div>':`${namedMock()}<div class="tabhint">Side-by-side values, grouped by category. The bar shows how similar each value is.</div>${groups(cur.c.rows).map(g=>`<div class="gc">${gh(g.n)}<div class="mh"><div></div><div>${t.name}</div><div>${A.name}</div><div>Similarity</div></div>${g.r.map(r=>`<div class="mr"><div class="ml">${r.m.label}</div><div class="mv" title="${srcName(t,r.m.key)}">${cell(r.m,r.x,r.y)}</div><div class="mv" title="${srcName(A,r.m.key)}">${cell(r.m,r.y,r.x)}</div><div class="ms">${r.sim==null?'':wt(r.m)<=0?'<span class="na">not scored</span>':`<div class="bar"><i style="width:${r.sim*100}%;background:hsl(${r.sim*120} 65% 52%)"></i></div><span>${Math.round(r.sim*100)}%</span>`}</div></div>`).join('')}</div>`).join('')}
+    <details class="wts"><summary>Sources</summary><div class="src" style="margin:0 0 12px">${[...new Set([...Object.values(t.metrics),...Object.values(A.metrics)].map(m=>m.source))].map(k=>esc((DATA.sources[k]||{}).name||k)).join('<br><br>')}</div></details>`),
+    placeTab=(tab==='profile'||tab==='data'||tab==='match')&&!named;
+    openPanel(head(t)+hero+tabsH+(tab==='plan'&&window.BP?BP.html(t):tab==='profile'?profileH:tab==='data'?dataH:matchH)+`
+    <div class="btns">${placeTab?'':`<button class="pri" onclick="focusBody('earth','${A.id}')">Fly to ${A.name}</button><button onclick="focusBody('${t.body}')">Back to ${DATA.bodies[t.body].name}</button>`}</div>`);if(tab==='plan'&&window.BP)BP.mount(t);if(tab==='match'){mBest(id);if(named)rankFill(id,cur.a.id)}if(tab==='profile'||tab==='data')cmpFill(id,tab)}
+  else{
+    const us=DATA.sites.filter(s=>s.type==='target'&&(s.analogs||[]).some(a=>a.id===id)).map(s=>({s,c:compare(s,s.analogs.find(a=>a.id===id))}));
+    const rows=DATA.metrics.map(m=>({m,x:val(t,m.key)})).filter(r=>r.x!=null);
+    openPanel(head(t)+`<p class="sub" style="margin-top:12px">${t.summary||''}</p>
+    ${groups(rows.map(r=>({...r,y:null}))).map(g=>`<div class="gc">${gh(g.n)}${g.r.map(r=>`<div class="mr one"><div class="ml">${r.m.label}</div><div class="mv" title="${srcName(t,r.m.key)}">${cell(r.m,r.x)}</div></div>`).join('')}</div>`).join('')}
+    <div class="grp">Used as analog for</div>${us.map(u=>`<button class="card" onclick="focusBody('${u.s.body}','${u.s.id}','${id}')"><span>${u.s.name} · ${DATA.bodies[u.s.body].name}</span><b>${pct(u.c.score)}</b></button>`).join('')||'<div class="sub">No target uses this site yet.</div>'}
+    <div class="btns"><button onclick="focusBody('earth')">Back to Earth</button></div>`)}}
+
+/* ---------- Site panel state ---------- */
+let CUR=null;const TB={v:'match',cmp:'p0'};
+const GI={Climate:['','Surface temperature, day and night'],'Air (Earth only)':['','Air temperature; the Moon has no air, so never scored'],Terrain:['','Slope and geology tags'],Albedo:['','Share of sunlight the surface reflects; ice is bright, basalt is dark'],Landform:['','Relief and shape of the land'],Environment:['','Gravity, air pressure and radiation']};
+const gh=n=>{const g=GI[n]||['',''];return `<div class="gh"><span class="gi">${g[0]}</span><div><b>${n}</b>${g[1]?`<small>${g[1]}</small>`:''}</div></div>`};
+function setCmp(id,v){const st=panel.scrollTop;if(v.startsWith('n:')){TB.cmp='n';showSite(id,v.slice(2))}else{TB.cmp=v;showSite(id,CUR.aid)}panel.classList.add('nf');panel.scrollTop=st}
+function setTab(v){if(!CUR)return;const st=panel.scrollTop;TB.v=v;showSite(CUR.id,CUR.aid);panel.classList.add('nf');panel.scrollTop=st}
+function autoWhy(t,A){const a=val(t,'tags')||[],b=val(A,'tags')||[],sh=a.filter(x=>b.includes(x));return (forBody(A,t.body)?'':'Usually studied as a '+usualFor(A)+' analog, not for '+DATA.bodies[t.body].name+'. ')+'Not in the curated list; ranked automatically. '+(sh.length?'Shares: '+sh.join(', ')+'.':'Matched on measurements only.')}
+
+/* ---------- Where the analogy holds (named Earth sites) ----------
+   Same bands as the summary used everywhere else (anaVerdict): strong at 80% similarity or more, breaks down under 60%.
+   Only scored measurements (weight above 0) are counted. */
+function cov(t,A){const out=[];
+  for(const m of DATA.metrics){if(m.type!=='num'||wt(m)<=0)continue;const x=val(t,m.key),y=val(A,m.key);if(x==null||y==null)continue;
+    const sim=1-Math.min(1,Math.abs(x-y)/(m.scale||1));out.push({m,f:m,sim,b:sim>=.8?1:sim>=.6?.5:0})}
+  return out}
+function combo(t){const an=DATA.sites.filter(s=>s.type==='analog').map(A=>({A,c:cov(t,A)}));let best=null;
+  for(let i=0;i<an.length;i++)for(let j=i+1;j<an.length;j++){const k=new Map();
+    [an[i],an[j]].forEach(z=>z.c.forEach(r=>k.set(r.m.key,Math.max(k.get(r.m.key)||0,r.b))));
+    const s=[...k.values()].reduce((a,b)=>a+b,0);if(!best||s>best.s)best={a:an[i].A,b:an[j].A,s,k}}
+  return best}
+function covHTML(t,A){const c=cov(t,A);if(!c.length)return '';
+  const o=combo(t),k=o?[...o.k.entries()]:[],n=f=>k.filter(z=>z[1]===f).length,gap=k.filter(z=>z[1]===0).map(z=>esc(fName(DATA.metrics.find(m=>m.key===z[0])))),
+    miss=DATA.metrics.filter(m=>m.type==='num'&&wt(m)>0&&m.dimension!=='air'&&val(t,m.key)==null).map(fName);
+  return `<div class="grp">Where the analogy holds and where it breaks</div>${anaVerdict(c,miss)}
+  ${o?`<div class="why">Best pair of named Earth sites: <b>${esc(o.a.name)}</b> + <b>${esc(o.b.name)}</b> give a strong analogy on ${n(1)} of ${k.length} measurements between them (${n(.5)} partial).${gap.length?` Not matched even with both: ${gap.join(', ')}.`:''}</div>`:''}`}
+
+/* ---------- Method & data panel ----------
+   Everything here is computed from the loaded dataset and the live weights, so it stays correct when real data replaces the mock set. */
+const CREDITS='Planetary textures: Solar System Scope (NASA elevation & spacecraft imaging data, CC-BY 4.0). Earth imagery: NASA Visible Earth / Blue Marble.';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),fmt=v=>(+v).toLocaleString(undefined,{maximumFractionDigits:3});
+function methodPair(){
+  let t=CUR&&S[CUR.id],a=t&&((t.analogs||[]).find(x=>x.id===CUR.aid)||(S[CUR.aid]?{id:CUR.aid}:null));
+  if(t&&a&&S[a.id])return{t,a,c:compare(t,a),pick:'last comparison you opened'};
+  let b=null;DATA.sites.filter(s=>s.type==='target').forEach(s=>(s.analogs||[]).forEach(x=>{if(!S[x.id])return;const c=compare(s,x);if(!b||(c.score||0)>(b.c.score||0))b={t:s,a:x,c,pick:'highest-scoring curated pair'}}));
+  return b}
+function showMethod(){
+  const P=methodPair(),M=DATA.meta||{},
+    all=DATA.sites.flatMap(s=>s.analogs||[]),ov=all.filter(a=>a.score!=null).length,
+    zero=DATA.metrics.filter(m=>m.type==='num'&&wt(m)<=0).map(m=>esc(m.label)),
+    back=sel?`showSite('${sel}'${CUR&&CUR.id===sel?`,'${CUR.aid}'`:''})`:'overview()';
+  let ex='';
+  if(P){
+    const rows=P.c.rows,sc=rows.filter(r=>r.sim!=null&&wt(r.m)>0),ws=sc.reduce((s,r)=>s+wt(r.m),0),calc=ws?sc.reduce((s,r)=>s+wt(r.m)*r.sim,0)/ws:null,
+      skip=rows.filter(r=>!(r.sim!=null&&wt(r.m)>0)&&r.x!=null&&r.y!=null),
+      miss=rows.filter(r=>(r.x!=null||r.y!=null)&&(r.x==null||r.y==null)),
+      p=v=>v<0?'('+fmt(v)+')':fmt(v),
+      line=r=>{if(r.m.type==='num')return `|${p(r.x)} − ${p(r.y)}| = ${fmt(Math.abs(r.x-r.y))}${esc(un(r.m.unit))} · scale ${fmt(r.m.scale||1)}`;
+        const a=new Set(r.x),b=new Set(r.y);return `${[...a].filter(k=>b.has(k)).length} shared of ${new Set([...a,...b]).size} tags`};
+    ex=`<div class="grp">Worked example</div><div class="sub">${esc(P.t.name)} vs ${esc(S[P.a.id].name)} · ${P.pick}</div>
+    ${sc.length?`<div class="mh m4" style="margin-top:8px"><div>Metric</div><div>Similarity</div><div>Max points</div><div>Earned</div></div>
+    ${sc.map(r=>{const w=wt(r.m);return `<div class="mr m4"><div class="ml">${esc(r.m.label)}<small>${line(r)}</small></div><div>${pct(r.sim)}</div><div>${(w/ws*100).toFixed(1)}</div><div>${(w*r.sim/ws*100).toFixed(1)}</div></div>`}).join('')}
+    <div class="mr m4"><div><b>Total</b></div><div></div><div>100</div><div><b>${(calc*100).toFixed(1)}</b></div></div>
+    <div class="mp">${(calc*100).toFixed(1)} of 100 points → <b>${pct(calc)} match</b>.</div>`:'<div class="mp">No metric has a value on both sites with a weight above 0, so no score can be computed.</div>'}
+    ${P.a.score!=null?`<div class="why">This pair has a hand-set score of ${pct(P.a.score)} in the dataset. It replaces the computed ${pct(calc)}, so the comparison panel shows ${pct(P.a.score)}.</div>`:''}
+    ${skip.length?`<div class="note2">Shown but not scored: ${skip.map(r=>esc(r.m.label)).join(', ')}.</div>`:''}
+    ${miss.length?`<div class="note2">Skipped because one site has no value: ${miss.map(r=>esc(r.m.label)).join(', ')}. The other weights are rescaled.</div>`:''}
+    <div class="note2">Open any comparison first, then “How is this score calculated?”, to see its numbers here.</div>`}
+  const srcs=Object.entries(DATA.sources||{}).map(([k,s])=>{const u=/^https?:\/\//.test(s.url||'')?s.url:((s.name||'').match(/https?:\/\/[^\s;)]+/)||[''])[0];
+    return `<div class="srow">${esc(s.name||k)}${s.uncited?' <span class="cu">no citation</span>':''}${u?`<br><a class="lnk" href="${esc(u)}" target="_blank" rel="noopener">${esc(u)}</a>`:''}</div>`}).join('');
+  openPanel(`<div class="kick">Method &amp; data</div><h2>How the match works</h2>
+  <div class="sub">A match percentage shows how alike two places are on the measurements listed under Sources below. It helps you explore and rank places. It is not a scientific verdict that one place can stand in for another.</div>
+  <div class="grp">The rule</div>
+  <div class="mp"><b>Numbers.</b> Similarity = 1 − |difference| ÷ scale, never below 0. The scale is the gap that counts as completely different; the dataset sets it for each metric.</div>
+  <div class="mp"><b>Geology tags.</b> Similarity = shared tags ÷ all distinct tags across both sites.${DATA.metrics.some(m=>m.type==='tags'&&wt(m)<=0)?' The tags are curated by the team and have no citation yet, so by default they are shown but not scored (weight 0).':''}</div>
+  <div class="mp"><b>Combining.</b> The match is the weighted average of these similarities. Weight 0 means a metric is shown but not scored. If either site has no value for a metric, it is skipped and the remaining weights are rescaled. “Also consider” sites are ranked with the same formula.</div>
+  <div class="mp"><b>Strong, partial, breaks down.</b> Each measurement is called a strong analogy at 80% similarity or more, partial from 60% to 80%, and a breakdown under 60%. A use is suggested only when every measurement of that kind is strong. These cut-offs are our own rule of thumb.</div>
+  ${ov?`<div class="mp"><b>Hand-set scores.</b> ${ov} of ${all.length} curated pairs in this dataset carry a score set by hand, which replaces the computed one.</div>`:''}
+  ${ex}
+  <div class="grp">Backtest: does the score find known analogs?</div><div id="valid"><div class="note2">Scoring every place on Earth…</div></div>
+  <div class="grp">What the score cannot tell you</div>
+  <div class="mp">The scales, weights and tags are design choices. The formula has not been scientifically validated, and changing them changes the ranking.</div>
+  <div class="mp">Each metric is judged on its own. The formula does not model how conditions interact, such as low pressure and low temperature together.</div>
+  <div class="mp">${zero.length?`${zero.join(', ')} ${zero.length>1?'are':'is'} shown but not scored in this dataset. No Earth surface site can match the Moon or Mars on every condition, so a high match does not mean all of them are reproduced.`:'No Earth surface site can match the Moon or Mars on every condition, so a high match does not mean all of them are reproduced.'}</div>
+  <div class="grp">Data</div>
+  <div class="mp">${M.status==='real'?'<b>Real data.</b> Each value traces to a source below.':'<b>Illustrative mock data.</b> The values show how the method behaves. They are not measurements.'}</div>
+  <div class="note2">${esc(M.title||'Dataset')}${M.updated?' · updated '+esc(M.updated):''} · schema ${esc(DATA.schema)}</div>
+  ${srcs}<div class="note2">${esc(CREDITS)}</div>
+  <div class="btns"><button class="pri" onclick="${back}">${sel?'Back':'Back to overview'}</button></div>`);METH=true;buildBar();validFill()}
+
+/* Match tab: the most similar places anywhere on Earth, from the same Earth grid as "Find on Earth" (every cell scored),
+   shown above the curated analog sites. Uses efScore/efPick on a saved-and-restored EF state. */
+const BEST={};
+async function bestPlaces(tid){
+  if(BEST[tid])return BEST[tid];
+  try{await efLoad()}catch(e){return {err:'The Earth grid files in docs/data/ could not be read. Make them with <b>python pipeline/build_grid.py</b>.'}}
+  const g=EF.grid,T=EF.targets&&EF.targets.targets&&EF.targets.targets[tid],use=T?g.features.filter(f=>T[f.key]):[];
+  if(!use.length)return {err:`There are no values for ${esc(S[tid].name)} in docs/data/targets.json yet. Make them with <b>python pipeline/build_targets.py</b>.`};
+  const keep={tid:EF.tid,on:EF.on,score:EF.score,picks:EF.picks,best:EF.best,hideKnown:EF.hideKnown,land:EF.land,off:EF.off};
+  EF.tid=tid;EF.on={};EF.off={};use.forEach(f=>EF.on[f.dimension]=true);EF.hideKnown=false;efScore();efPick();
+  const sc=EF.score,land=Float32Array.from(sc.filter(v=>v===v)).sort();
+  const r={g,T,use,sc,land,picks:EF.picks.slice(0,5),demo:!!(g.demo||EF.targets.demo)};Object.assign(EF,keep);
+  return BEST[tid]=r}
+/* Backtest: where does a named Earth site's grid cell rank among all land cells for a target? Returns the share of cells
+   that score lower (0-100), so 90 means "top 10% of Earth". Uses the same default-weight grid score as Find on Earth. */
+function rankV(land,v){if(!land||!land.length||v==null||v!==v)return null;let lo=0,hi=land.length;while(lo<hi){const m=(lo+hi)>>1;if(land[m]<v)lo=m+1;else hi=m}return 100*lo/land.length}
+function rankAt(B,lat,lon){if(!B||B.err)return null;const g=B.g,i=Math.min(g.ny-1,Math.floor((90-lat)/g.cell_deg)),j=Math.min(g.nx-1,Math.floor((lon+180)/g.cell_deg));return rankV(B.land,B.sc[i*g.nx+j])}
+/* List rank: same maths as rankAt, rounded UP so the label is always true ("top 0.1%" = within the best 0.1% of scored cells).
+   The tooltip gives the exact position, e.g. cell 3 of 17,412. */
+const topFine=r=>{if(r==null)return '';const t=100-r,x=t<1?Math.max(.1,Math.ceil(t*10-1e-9)/10).toFixed(1):String(Math.ceil(t-1e-9));return `top ${x}% of Earth`};
+const rkTag=(land,v)=>{const r=rankV(land,v);if(r==null)return '';const n=land.length,k=n-Math.round(r*n/100);return `<small class="rk" title="Cell ${k.toLocaleString()} of ${n.toLocaleString()} scored cells">${topFine(r)}</small>`};
+const topTxt=r=>r==null?'no grid value':r>=50?`top ${Math.max(1,Math.round(100-r))}% of Earth`:`bottom ${Math.max(1,Math.round(r))}% of Earth`;
+async function rankFill(tid,aid){const B=await bestPlaces(tid),el=$('rk-'+aid);if(!el||!S[aid])return;const r=rankAt(B,S[aid].lat,S[aid].lon);
+  el.innerHTML=r==null?'':`On the Earth grid, ${esc(S[aid].name)} ranks in the <b>${topTxt(r)}</b> for ${esc(S[tid].name)}${r<50?'. The measured terrain does not support this pairing; it rests on reasons the grid does not measure.':'.'}`}
+async function validFill(){const el=$('valid');if(!el)return;const T=DATA.sites.filter(s=>s.type==='target'&&(s.analogs||[]).length),rows=[];
+  for(const t of T){const B=await bestPlaces(t.id);for(const a of t.analogs){if(!S[a.id])continue;rows.push({t,A:S[a.id],r:rankAt(B,S[a.id].lat,S[a.id].lon)})}}
+  const ok=rows.filter(x=>x.r!=null),hi=ok.filter(x=>x.r>=75).length,med=ok.length?ok.map(x=>x.r).sort((a,b)=>a-b)[ok.length>>1]:null;if(!$('valid'))return;
+  el.innerHTML=`<div class="mp">For each curated pair, the Earth site's grid cell is ranked among all ${B0(rows)} land cells scored for that target. If the score captures what makes these places analogs, curated sites should rank near the top.</div>
+  <div class="mh m4" style="margin-top:8px"><div>Target</div><div>Curated analog</div><div>Score</div><div>Rank on Earth</div></div>
+  ${rows.map(x=>`<div class="mr m4"><div class="ml">${esc(x.t.name)}</div><div>${esc(x.A.name)}</div><div>${pct(compare(x.t,{id:x.A.id}).score)}</div><div>${x.r==null?'<span class="na">no grid value</span>':topTxt(x.r)}</div></div>`).join('')}
+  <div class="mp">${hi} of ${ok.length} curated pairs rank in the top 25% of Earth${med!=null?`; the median pair ranks in the ${topTxt(med)}`:''}. Pairs that rank low are chosen for reasons the grid does not measure yet (such as regolith or cold), so they show what the score misses.</div>`}
+const B0=rows=>{const b=Object.values(BEST).find(x=>x&&x.land);return b?b.land.length.toLocaleString():'all'};
+const UNIT={deg:'°',degC:'°C'},un=u=>UNIT[u]||(u?(u[0]==='°'||u==='%'?u:' '+u):''),fmt2=v=>(+v).toLocaleString(undefined,{maximumFractionDigits:2});
+/* One short name per feature everywhere (the long grid label stays as the tooltip), and one way to print a value with its unit. */
+const fName=f=>(GIS_LAYER_INFO[f.key]&&GIS_LAYER_INFO[f.key].name)||f.label,fShort=f=>(GIS_LAYER_INFO[f.key]&&GIS_LAYER_INFO[f.key].short)||f.label,fPlain=f=>fName(f).replace(/\s*\([^)]*\)$/,''),fVal=(v,f)=>(f.unit==='m'?Math.round(v).toLocaleString():fmt2(v))+un(f.unit);
+/* Where the analogy holds and where it breaks, for one Earth place. Same 80% / 60% bands as the question verdict (our own
+   rule of thumb). "Use for" comes from which whole dimension matches; it is team reasoning, the numbers come from the grids. */
+const ANA_USE={terrain:'driving and slope tests',landform:'landing approach and route planning over similar relief',thermal:'thermal tests of hardware (mean temperature and day-night swing)','day thermal':'daytime thermal tests of hardware',albedo:'tests where surface brightness matters (ice or snow against rock and soil)'};
+function anaParts(rows){const sc=rows.filter(r=>r.sim!=null),dims=[...new Set(sc.map(r=>r.f.dimension))],of=d=>sc.filter(r=>r.f.dimension===d);
+  return{hi:sc.filter(r=>r.sim>=.8),mid:sc.filter(r=>r.sim<.8&&r.sim>=.6),lo:sc.filter(r=>r.sim<.6),
+    use:dims.filter(d=>of(d).every(r=>r.sim>=.8)).map(d=>ANA_USE[d]||d),not:dims.filter(d=>of(d).some(r=>r.sim<.6)).map(d=>ANA_USE[d]||d)}}
+function anaVerdict(rows,miss){const A=anaParts(rows);if(!A.hi.length&&!A.mid.length&&!A.lo.length)return '';
+  const nm=a=>a.map(r=>`${esc(fPlain(r.f))} ${Math.round(r.sim*100)}%`).join(', ');
+  return `<div class="ana"><div class="cvr"><span class="cvl">Strong analogy</span><span>${A.hi.length?nm(A.hi):'<span class="na">none of the measured features</span>'}</span></div>
+  ${A.mid.length?`<div class="cvr"><span class="cvl">Partial</span><span>${nm(A.mid)}</span></div>`:''}
+  <div class="cvr"><span class="cvl">Breaks down</span><span>${A.lo.length?nm(A.lo):'<span class="na">none of the measured features</span>'}</span></div>
+  ${A.use.length?`<div class="cvr"><span class="cvl">Use it for</span><span>${A.use.map(esc).join('; ')}</span></div>`:''}
+  ${A.not.length?`<div class="cvr"><span class="cvl">Not for</span><span>${A.not.map(esc).join('; ')}</span></div>`:''}
+  <div class="note2">Strong = 80% or more alike, breaks down = under 60% (our own rule of thumb).${miss&&miss.length?' Not compared, no sourced value for the target: '+miss.map(esc).join(', ')+'.':''} No Earth site reproduces the low gravity, the vacuum or thin air, or the radiation.</div></div>`}
+const srcList=B=>[...new Set([...B.g.features.map(f=>f.source),...B.use.map(f=>(B.T[f.key].source||'').replace(/^Measured by pipeline\/build_targets.py from /,'').split(' (')[0])])].filter(Boolean);
+const realLine=B=>B.demo?'<div class="mock">Not real yet: docs/data/targets.json or the Earth grid is marked as demo data, so this only shows how the search works.</div>':'<div class="realline">Real data, sources below</div>';
+async function mBest(tid){
+  const box=()=>CUR&&CUR.id===tid?$('mbest'):null;if(!box())return;
+  box().innerHTML='<div class="grp">Most similar places on Earth</div><div class="note2">Scoring every place on Earth…</div>';
+  const B=await bestPlaces(tid),b=box();if(!b)return;
+  if(B.err){b.innerHTML=`<div class="grp">Most similar places on Earth</div><div class="note2">Not available yet. ${B.err}</div>`;if(TB.cmp!=='n'){TB.cmp='n';showSite(tid,CUR.aid)}return}
+  const g=B.g,t=S[tid],k=TB.cmp==='n'?-1:Math.max(0,Math.min(+TB.cmp.slice(1)||0,B.picks.length-1)),p=B.picks[k],mv=$('mvs');
+  if(mv&&!p){TB.cmp='n';showSite(tid,CUR.aid);return}
+  /* The circle on the Match tab: the selected most-similar place (default: the best one). Same grid score as the list. */
+  if(mv)mv.innerHTML=`<div class="vs"><div class="side"><div class="kick">${DATA.bodies[t.body].name} target</div><h3>${esc(t.name)}</h3><p>${t.summary||''}</p></div>
+    <div class="donut" style="--p:${Math.round(p.s*100)}"><span>${pct(p.s)}</span><small>MATCH</small></div>
+    <div class="side an"><div class="kick">Earth place #${k+1}</div><h3>${efLL(p.la,p.lo)}</h3><p>${efPN(p.i)?esc(efPN(p.i))+'. ':''}${p.k?'Near '+esc(p.k.name)+'. ':''}One ${g.cell_deg}° grid cell, about ${Math.round(g.cell_deg*111)} km across, scored on ${B.use.length} measured features${rankV(B.land,p.s)!=null?`; ranks in the ${topFine(rankV(B.land,p.s))}`:''}.</p></div></div>
+    ${anaVerdict(B.use.map(f=>{const v=EF.feats[f.key][p.i],tv=B.T[f.key].value;return{f,sim:v===v?1-Math.min(1,Math.abs(v-tv)/(f.scale||1)):null}}),B.g.features.filter(f=>f.dimension!=='air'&&!B.T[f.key]).map(fName))}
+    <div class="note2">Every value side by side is on the <button class="lnk" onclick="setTab('data')">Data tab</button>. <button class="lnk" onclick="showMethod()">How is this score calculated?</button></div>
+    <div class="btns"><button class="pri" onclick="mBestOpen('${tid}',${p.i})">Show this place on the globe</button><button onclick="focusBody('${t.body}')">Back to ${DATA.bodies[t.body].name}</button></div>`;
+  b.innerHTML=`<div class="grp">Most similar places on Earth</div>${realLine(B)}
+  <div class="tabhint">Every ${g.cell_deg}° cell of Earth (about ${Math.round(g.cell_deg*111)} km) scored against ${esc(S[tid].name)} on ${B.use.map(f=>esc(fPlain(f).toLowerCase())).join(', ')}.</div>
+  ${B.picks.map((p,j)=>`<button class="efr${j===k?' on':''}" onclick="setCmp('${tid}','p${j}')"><b>${j+1}</b><span>${efLL(p.la,p.lo)}${p.k?` <span class="cu">near ${esc(p.k.name)}</span>`:''}${efPNh(p.i)}</span><b>${pct(p.s)}${rkTag(B.land,p.s)}</b></button>`).join('')||'<div class="note2">No cells to rank.</div>'}
+  <div class="note2">Places at least 800 km apart. “Top x% of Earth” is the share of all ${B.land.length.toLocaleString()} scored cells that score at least as high. Pick one to compare it in the circle below. Named sites are scored the same way, on the grid cell that contains them. A place tagged “near” a named site is a different cell up to 500 km away.</div>
+  <details class="wts"><summary>Sources</summary><div style="padding-bottom:8px">${srcList(B).map(x=>`<div class="note2" style="margin:2px 0">${esc(x)}</div>`).join('')}</div></details>`}
+async function cmpFill(tid,tab){
+  const B=await bestPlaces(tid);if(!CUR||CUR.id!==tid||TB.v!==tab||TB.cmp==='n')return;const box=$('cmpb'),og=$('cmp-places');if(!box)return;
+  if(B.err){if(og)og.innerHTML='<option disabled selected>Not available</option>';box.innerHTML=`<div class="note2">${B.err} Meanwhile, pick a named analog site above.</div>`;return}
+  const k=Math.max(0,Math.min(+TB.cmp.slice(1)||0,B.picks.length-1)),p=B.picks[k],t=S[tid],T=B.T,F=EF.feats;
+  if(og)og.innerHTML=B.picks.map((q,j)=>`<option value="p${j}"${j===k?' selected':''}>${j+1}. ${efLL(q.la,q.lo)}${efPN(q.i)?' · '+esc(efPN(q.i)):''} · ${pct(q.s)}${q.k?' · near '+esc(q.k.name):''}</option>`).join('');
+  if(!p){box.innerHTML='<div class="note2">No cells to rank.</div>';return}
+  const name=efLL(p.la,p.lo),rows=B.g.features.map(f=>{const v=F[f.key][p.i],tv=T[f.key]?T[f.key].value:null;return{f,v:v===v?v:null,tv,sim:tv!=null&&v===v?1-Math.min(1,Math.abs(v-tv)/(f.scale||1)):null}});
+  const unscored=rows.filter(r=>r.tv==null).map(r=>fPlain(r.f));
+  const foot=`${unscored.length?`<div class="note2">Not scored: ${unscored.map(esc).join('; ')}. There is no like-for-like sourced value for ${esc(t.name)} yet, so only the Earth value is shown.</div>`:''}
+  <details class="wts"><summary>Sources</summary><div class="src" style="margin:0 0 12px">${srcList(B).map(esc).join('<br><br>')}</div></details>
+  <div class="btns"><button class="pri" onclick="mBestOpen('${tid}',${p.i})">Show this place on the globe</button><button onclick="focusBody('${t.body}')">Back to ${DATA.bodies[t.body].name}</button></div>`;
+  if(tab==='data'){
+    box.innerHTML=`${realLine(B)}<div class="tabhint">Measured values side by side. The bar shows how similar each value is.</div>
+    <div class="gc"><div class="mh"><div></div><div>${esc(t.name)}</div><div>${name}</div><div>Similarity</div></div>
+    ${rows.map(r=>`<div class="mr"><div class="ml">${esc(fName(r.f))}<small>${esc(cap(r.f.dimension))}</small></div><div class="mv">${r.tv!=null?fVal(r.tv,r.f):'<span class="na">no sourced value</span>'}</div><div class="mv">${r.v!=null?fVal(r.v,r.f):'<span class="na">no data</span>'}</div><div class="ms">${r.sim==null?'<span class="na">not scored</span>':`<div class="bar"><i style="width:${r.sim*100}%;background:hsl(${r.sim*120} 65% 52%)"></i></div><span>${Math.round(r.sim*100)}%</span>`}</div></div>`).join('')}</div>${foot}`;
+  }else{
+    box.innerHTML=`${realLine(B)}<div class="tabhint">How ${esc(t.name)} and ${name} compare on each measured feature. Both bars in a row share one scale. The overall match and its rank on Earth are on the Match tab.</div>${(()=>{const q=rows.filter(r=>r.sim!=null).sort((x,y)=>y.sim-x.sim);return q.length>1?`<div class="note2">Closest on <b>${esc(fPlain(q[0].f))}</b> (${Math.round(q[0].sim*100)}%); furthest apart on <b>${esc(fPlain(q[q.length-1].f))}</b> (${Math.round(q[q.length-1].sim*100)}%).</div>`:''})()}
+    ${rows.map(r=>{const mx=Math.max(Math.abs(r.tv||0),Math.abs(r.v||0),1e-9),bar=(v,c)=>v==null?'<i></i>':`<i style="width:${Math.max(2,Math.abs(v)/mx*100)}%;background:${c}"></i>`;
+      return `<div class="pb"><b>${esc(fName(r.f))}</b><span class="na">${r.sim==null?'not scored':Math.round(r.sim*100)+'% similar'}</span>
+      <div class="bl"><span>${esc(t.name)}</span><div>${bar(r.tv,'var(--gold)')}</div><b>${r.tv!=null?fVal(r.tv,r.f):'–'}</b></div>
+      <div class="bl"><span>${name}</span><div>${bar(r.v,'var(--acc)')}</div><b>${r.v!=null?fVal(r.v,r.f):'–'}</b></div></div>`}).join('')}${foot}`;
+  }}
+async function mBestOpen(tid,i){await efStart(tid);if(EF.picks.some(p=>p.i===i))efSel(i)}
+/* ---------- Find on Earth ----------
+   Scores every cell of the Earth grid (docs/data, made by pipeline/) against a Moon/Mars target and paints it on the globe.
+   Same similarity rule as the rest of the app: 1 - min(1, |gap| / scale). Each dimension counts equally and its features share
+   that weight; a cell missing a feature is scored on the rest. Target values come from data/targets.json. */
+var EF={grid:null,feats:{},targets:null,tid:null,on:{},score:null,sel:-1,picks:[],best:null,hideKnown:false,keep:false,mesh:null,cv:null,tex:null};
+const EF_RAMP=[[0,[40,12,90]],[.4,[190,50,90]],[.7,[250,150,40]],[1,[255,245,150]]];
+function efRamp(s){for(let i=1;i<EF_RAMP.length;i++){const[a,c]=EF_RAMP[i-1],[b,d]=EF_RAMP[i];if(s<=b){const u=(s-a)/(b-a);return c.map((x,k)=>x+(d[k]-x)*u)}}return EF_RAMP[EF_RAMP.length-1][1]}
+function efHide(){if(EF&&EF.mesh)EF.mesh.visible=false;if(EF&&EF.pg)EF.pg.visible=false}
+/* Numbered pins for the best distinct places; the selected one is larger, pings, and its label shows the score. */
+function efPins(){const v=VIS.earth,R=v.R;if(!EF.pg){EF.pg=new THREE.Group();v.mesh.add(EF.pg)}
+  while(EF.pg.children.length)EF.pg.remove(EF.pg.children[0]);(EF.pinEls||[]).forEach(q=>q.el.remove());EF.pinEls=[];
+  EF.picks.forEach((p,k)=>{const on=p.i===EF.sel,g=mkPin(R,ll(p.la,p.lo,1).normalize(),0xffffff,on);if(!on)g.userData.ping.visible=false;EF.pg.add(g);
+    const el=document.createElement('div');el.className='mlbl ef'+(on?' on':'');el.textContent=on?`${k+1} · ${pct(p.s)}`:String(k+1);el.title=efLL(p.la,p.lo);el.onclick=()=>efSel(p.i);document.body.appendChild(el);
+    EF.pinEls.push({g,el,on})});
+  EF.pg.visible=true}
+async function efLoad(){
+  if(EF.grid)return;
+  const get=async u=>{const r=await fetch(u,{cache:'no-cache'});/* always ask the server: data files change on every pipeline run */if(!r.ok)throw new Error(u+' returned HTTP '+r.status);return r},feats={};
+  const g=await (await get('data/grid.json')).json();
+  for(const f of g.features){const b=await (await get('data/'+f.key+'.bin')).arrayBuffer();if(b.byteLength!==g.ny*g.nx*4)throw new Error(f.key+'.bin does not match the size in grid.json');feats[f.key]=new Float32Array(b)}
+  let t=null;try{t=await (await get('data/targets.json')).json()}catch(e){}
+  let pl=null;try{pl=await (await get('data/places.json')).json()}catch(e){}/* optional: pipeline/build_places.py */
+  EF.grid=g;EF.feats=feats;EF.targets=t;EF.places=pl}
+/* Country and province of a grid cell (Natural Earth, see places.json). A cell with no land there borrows a neighbour's name as "near ...". */
+function efPN(i){const P=EF.places;if(!P||!P.cells)return '';const k=P.cells[i];if(k>=0)return P.names[k];const r=Math.floor(i/P.nx),c=i%P.nx;
+  for(const[dr,dc]of[[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]]){const rr=r+dr;if(rr<0||rr>=P.ny)continue;const q=P.cells[rr*P.nx+(c+dc+P.nx)%P.nx];if(q>=0)return 'near '+P.names[q]}return ''}
+const efPNh=i=>{const n=efPN(i);return n?`<small class="pn">${esc(n)}</small>`:''};
+function efScore(){
+  const g=EF.grid,T=EF.targets.targets[EF.tid]||{},n=g.ny*g.nx,use=g.features.filter(f=>EF.on[f.dimension]&&T[f.key]&&!(EF.off&&EF.off[f.key])),per={};
+  use.forEach(f=>per[f.dimension]=(per[f.dimension]||0)+1);
+  /* A cell is scored only if it has a value in EVERY dimension that is turned on. Otherwise a coastal or sea-ice cell with
+     only a temperature value could reach 100% on temperature alone. */
+  const dims=Object.keys(per),num=new Float32Array(n),den=new Float32Array(n),hit=new Uint8Array(n),sc=new Float32Array(n).fill(NaN);
+  dims.forEach((d,k)=>{const fs=use.filter(f=>f.dimension===d),seen=new Uint8Array(n);
+    for(const f of fs){const a=EF.feats[f.key],t=T[f.key].value,s=f.scale||1,w=1/per[d];
+      for(let i=0;i<n;i++){const v=a[i];if(v===v){num[i]+=w*(1-Math.min(1,Math.abs(v-t)/s));den[i]+=w;seen[i]=1}}}
+    for(let i=0;i<n;i++)hit[i]+=seen[i]});
+  for(let i=0;i<n;i++)if(den[i]>0&&hit[i]===dims.length)sc[i]=num[i]/den[i];
+  EF.score=sc}
+const efKm=(a,b,c,d)=>{const r=Math.PI/180,x=Math.sin((c-a)*r/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin((d-b)*r/2)**2;return 12742*Math.asin(Math.sqrt(x))};
+const efCell=i=>{const g=EF.grid;return[90-(Math.floor(i/g.nx)+.5)*g.cell_deg,-180+(i%g.nx+.5)*g.cell_deg]};
+const efLL=(la,lo)=>Math.abs(la).toFixed(1)+'°'+(la>=0?'N':'S')+', '+Math.abs(lo).toFixed(1)+'°'+(lo>=0?'E':'W');
+function efPick(){
+  const sc=EF.score,idx=[];for(let i=0;i<sc.length;i++)if(sc[i]===sc[i])idx.push(i);
+  idx.sort((a,b)=>sc[b]-sc[a]);
+  const known=DATA.sites.filter(s=>s.body==='earth'),near=(la,lo)=>{let b=null,d=1e9;known.forEach(s=>{const k=efKm(la,lo,s.lat,s.lon);if(k<d){d=k;b=s}});return d<=500?b:null},out=[];
+  for(const i of idx){const[la,lo]=efCell(i),k=near(la,lo);if(EF.hideKnown&&k)continue;
+    if(out.every(p=>efKm(la,lo,p.la,p.lo)>800)){out.push({i,la,lo,s:sc[i],k});if(out.length===10)break}}
+  EF.best=idx.length?sc[idx[0]]:null;EF.picks=out;EF.land=Float32Array.from(idx.map(i=>sc[i])).sort()}
+function efPaint(){
+  const g=EF.grid;if(!EF.cv){EF.cv=document.createElement('canvas');EF.cv.width=g.nx;EF.cv.height=g.ny}
+  const ctx=EF.cv.getContext('2d'),im=ctx.createImageData(g.nx,g.ny),d=im.data,sc=EF.score;
+  for(let i=0;i<sc.length;i++){const s=sc[i];if(s!==s)continue;const c=efRamp(s),o=i*4;d[o]=c[0];d[o+1]=c[1];d[o+2]=c[2];d[o+3]=Math.round(230*Math.min(1,Math.max(0,(s-.2)/.5)))}
+  ctx.putImageData(im,0,0);
+  if(!EF.tex){const t=new THREE.CanvasTexture(EF.cv);t.magFilter=THREE.NearestFilter;t.minFilter=THREE.LinearFilter;t.generateMipmaps=false;EF.tex=t;
+    const v=VIS.earth;EF.mesh=new THREE.Mesh(new THREE.SphereGeometry(v.R*1.006,96,64),new THREE.MeshBasicMaterial({map:t,transparent:true,depthWrite:false}));v.mesh.add(EF.mesh)}
+  EF.tex.needsUpdate=true;EF.mesh.visible=true}
+function efFly(la,lo){const v=VIS.earth,c=v.mesh.position.clone(),dir=v.mesh.localToWorld(ll(la,lo,v.R)).sub(c).normalize();flyTo(c.clone().add(dir.multiplyScalar(v.R*2.7)),c,v.R*1.2)}
+function efMsg(title,html){EF.keep=true;openPanel(`<div class="kick">Find on Earth</div><h2>${title}</h2>${html}<div class="btns"><button class="pri" onclick="efBack()">Back to ${esc(S[EF.tid].name)}</button></div>`);EF.keep=false}
+async function efStart(tid){
+  EF.tid=tid;
+  try{await efLoad()}catch(e){return efMsg('Earth grid not found',`<div class="mp">The website could not read the grid files in <b>docs/data/</b>.</div>
+    <div class="mp">1. Open the site through a local server (README, section 1), not by double-clicking the file.</div>
+    <div class="mp">2. Make the files: <b>python pipeline/make_demo_grid.py</b> (fake data) or <b>python pipeline/build_grid.py</b> (real data).</div><div class="note2">Details: ${esc(e.message)}</div>`)}
+  const T=EF.targets&&EF.targets.targets&&EF.targets.targets[tid];
+  if(!T||!EF.grid.features.some(f=>T[f.key]))return efMsg('No target values yet',`<div class="mp">There are no values for ${esc(S[tid].name)} in <b>docs/data/targets.json</b>, so there is nothing to compare Earth with.</div>
+    <div class="mp">Add an entry with a value and a source for each grid feature (format in README). Moon and Mars values should come from the patch around the site, with the source named.</div>`);
+  EF.on={};EF.off={};EF.preset='all';EF.grid.features.filter(f=>T[f.key]).forEach(f=>EF.on[f.dimension]=true);EF.sel=-1;
+  focusBody('earth');
+  EF.keep=true;openPanel(`<div class="kick">Find on Earth</div><h2>${esc(S[tid].name)}</h2><div class="efback"><button class="lnk" onclick="efBack()">← Back to ${esc(S[tid].name)}</button></div><div id="efb"></div>`);EF.keep=false;
+  efUpdate();const p=EF.picks[0];if(p)efFly(p.la,p.lo)}
+function efUpdate(){efScore();efPick();if(!EF.picks.some(p=>p.i===EF.sel))EF.sel=EF.picks.length?EF.picks[0].i:-1;efPaint();efPins();efDraw()}
+/* Question presets: what a team is trying to learn decides which measurements matter. Each preset switches individual
+   features on or off (not just whole dimensions) and says why in plain words. The reasons are team reasoning, not
+   citations; the numbers still come only from the grids. A feature the target has no sourced value for stays unused and is
+   listed as such. */
+const EF_PRESETS=[
+  {id:'all',name:'Everything measured',keys:null,why:'All features with a sourced value for this target, each dimension weighted equally. This is the default search.'},
+  {id:'rover',name:'Rover mobility',keys:['slope_p90','slope_median','relief','albedo'],why:'Wheels and traction care about how steep the ground is, both the typical slope and the steepest tenth, and how much height changes across the area. Albedo is included only to tell ice and snow (bright) from rock and soil (dark), because a wheel on ice is not a wheel on regolith. Temperature is left out.'},
+  {id:'landing',name:'Landing hazard',keys:['slope_p90','relief'],why:'A lander is most threatened by the steepest ground and by large height changes within its landing ellipse, so only the steep-slope tail and local relief are used.'},
+  {id:'thermal',name:'Thermal cycling',keys:['ts_mean','ts_range','ts_day','albedo'],why:'Electronics, batteries and seals are stressed by the surface temperature and its day-night swing. Albedo is included because it controls how much sunlight heats the ground. The Moon has no sourced albedo, so there it uses temperature only.'}];
+/* The question in use, which of its measurements the target has no sourced value for, and whether a thermal question has no temperature at all. */
+function efQ(){const q=EF_PRESETS.find(x=>x.id===EF.preset),T=EF.targets.targets[EF.tid]||{},alt={ts_day:['ts_mean'],ts_mean:['ts_day']};
+  return{q,miss:q?(q.keys||[]).filter(k=>!T[k]&&!(alt[k]||[]).some(x=>T[x])).map(k=>{const f=EF.grid.features.find(f=>f.key===k);return f?fPlain(f):k}):[],noT:!!q&&q.id==='thermal'&&!T.ts_mean&&!T.ts_day}}
+function efPreset(id){
+  const P=EF_PRESETS.find(x=>x.id===id),T=EF.targets.targets[EF.tid]||{},fs=EF.grid.features.filter(f=>T[f.key]);
+  EF.preset=id;EF.off={};EF.on={};
+  fs.forEach(f=>{const inn=!P.keys||P.keys.includes(f.key);if(inn)EF.on[f.dimension]=true;else EF.off[f.key]=true});
+  efUpdate()}
+function efFeat(k){const fs=EF.grid.features,d=fs.find(f=>f.key===k).dimension,T=EF.targets.targets[EF.tid]||{};
+  if(!EF.on[d]){EF.on[d]=true;fs.filter(f=>f.dimension===d).forEach(f=>{EF.off[f.key]=f.key!==k})}
+  else{EF.off[k]=!EF.off[k];if(!fs.some(f=>f.dimension===d&&T[f.key]&&!EF.off[f.key]))EF.on[d]=false}
+  EF.preset='custom';efUpdate()}
+function efKnown(v){EF.hideKnown=v;efUpdate()}
+/* The measurements in use for one Earth cell, with target value, cell value and similarity (same maths as efScore). */
+function efRows(i){const T=EF.targets.targets[EF.tid]||{};return EF.grid.features.filter(f=>EF.on[f.dimension]&&T[f.key]&&!EF.off[f.key]).map(f=>{const v=EF.feats[f.key][i],tv=T[f.key].value;return{f,tv,v:v===v?v:null,sim:v===v?1-Math.min(1,Math.abs(v-tv)/(f.scale||1)):null}})}
+const efMiss=()=>{const T=EF.targets.targets[EF.tid]||{};return EF.grid.features.filter(f=>f.dimension!=='air'&&!T[f.key]).map(fName)};
+/* Plain-text report of the selected place, for notes, a paper or a message. Only what is on screen, plus the sources. */
+function efCopy(){const p=EF.picks.find(q=>q.i===EF.sel);if(!p)return;const t=S[EF.tid],rows=efRows(p.i),A=anaParts(rows),q=EF_PRESETS.find(x=>x.id===EF.preset),T=EF.targets.targets[EF.tid]||{},
+    nm=a=>a.length?a.map(r=>`${fPlain(r.f)} ${Math.round(r.sim*100)}%`).join(', '):'none of the measured features',r=rankV(EF.land,p.s),miss=efMiss(),
+    src=[...new Set([...rows.map(x=>x.f.source),...rows.map(x=>T[x.f.key].source)])].filter(Boolean);
+  const txt=['Earth Analogs Explorer: analog report','',
+    `Target: ${t.name} (${DATA.bodies[t.body].name}), ${efLL(t.lat,t.lon)}`,
+    `Earth place: ${efLL(p.la,p.lo)}${efPN(p.i)?', '+efPN(p.i):''}${p.k?' (near '+p.k.name+')':''}. One ${EF.grid.cell_deg} degree grid cell, about ${Math.round(EF.grid.cell_deg*111)} km across.`,
+    `Question: ${q?q.name:'Custom selection'}`,
+    `Match: ${pct(p.s)}${r!=null?' ('+topFine(r)+', among '+EF.land.length.toLocaleString()+' scored cells)':''}`,'',
+    'Measurement | '+t.name+' | this place | similarity',
+    ...rows.map(x=>`${fName(x.f)} | ${fVal(x.tv,x.f)} | ${x.v!=null?fVal(x.v,x.f):'no data'} | ${pct(x.sim)}`),'',
+    'Strong analogy (80% or more): '+nm(A.hi),...(A.mid.length?['Partial (60 to 80%): '+nm(A.mid)]:[]),'Breaks down (under 60%): '+nm(A.lo),
+    ...(A.use.length?['Use it for: '+A.use.join('; ')]:[]),...(A.not.length?['Not for: '+A.not.join('; ')]:[]),
+    ...(miss.length?['Not compared, no sourced value for the target: '+miss.join(', ')]:[]),'',
+    'Limits: values are averages over a square about 111 km wide. The 80% and 60% bands and the feature scales are the team\'s own choices. No Earth site reproduces the low gravity, the vacuum or thin air, or the radiation. Treat this as a lead to check, not a verdict.','',
+    'Sources:',...src.map(x=>'- '+x)].join('\n');
+  const done=()=>toast('Report copied. Paste it into your notes.'),fb=()=>{const a=document.createElement('textarea');a.value=txt;document.body.appendChild(a);a.select();try{document.execCommand('copy');done()}catch(e){toast('Copy failed. Select the table and copy it by hand.')}a.remove()};
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(done,fb);else fb()}
+function efSel(i){EF.sel=i;efPins();efDraw();const p=EF.picks.find(p=>p.i===i);if(p)efFly(p.la,p.lo)}
+function efDraw(){
+  const g=EF.grid,T=EF.targets.targets[EF.tid],dims=[...new Set(g.features.filter(f=>T[f.key]).map(f=>f.dimension))],demo=g.demo||EF.targets.demo||(EF.tid==='pick'&&PK.demo),
+    stops=[0,.2,.4,.6,.8,1].map(s=>`rgb(${efRamp(s).map(Math.round)}) ${s*100}%`).join(','),
+    use=g.features.filter(f=>EF.on[f.dimension]&&T[f.key]&&!EF.off[f.key]),sp=EF.picks.find(p=>p.i===EF.sel);
+  $('efb').innerHTML=`${demo?'<div class="mock">DEMO data: the Earth grid and the target values are made up to test the app. Do not read anything into this map.</div>':'<div class="realline">Real data, sources under "Target values and sources"</div>'}
+  <div class="sub" style="margin-top:10px">Every ${g.cell_deg}° cell of Earth (about ${Math.round(g.cell_deg*111)} km) scored against ${esc(S[EF.tid].name)}. Brighter means more similar.</div>
+  <div class="efl" style="background:linear-gradient(90deg,${stops})"></div><div class="efs"><span>0%</span><span>similarity</span><span>100%</span></div>
+  <div class="note2">${EF.best==null?'Switch on at least one measurement below.':`Best cell on Earth: <b>${pct(EF.best)}</b>. Cells under about 20% are left clear.${EF.best<.6?' Earth may simply have nothing close on these dimensions.':''}`}</div>
+  <div class="grp">What is the question?</div>
+  <div class="needs" style="margin:6px 0 4px">${EF_PRESETS.map(q=>`<button class="need${EF.preset===q.id?' on':''}" aria-pressed="${EF.preset===q.id}" onclick="efPreset('${q.id}')">${esc(q.name)}</button>`).join('')}</div>
+  ${(()=>{const Q=efQ();if(!Q.q)return '<div class="note2">Custom selection: the measurements switched on below.</div>';return `<div class="note2">${esc(Q.q.why)}</div>${Q.miss.length?`<div class="note2">No sourced value for ${esc(S[EF.tid].name)}: ${Q.miss.map(esc).join('; ')}. Left out of this answer.</div>`:''}`})()}
+  ${EF.best==null?'':(Q=>Q.noT?`<div class="mp" style="margin-top:8px"><b>This question cannot be answered for this place.</b> It has no sourced surface temperature, so the map below compares albedo only. <span class="na">Mars has temperature at the three named sites only.</span></div>`:`<div class="mp" style="margin-top:8px"><b>${EF.best>=.8?'Earth has a close analog for this question.':EF.best>=.6?'Earth has only a partial analog for this question.':'Earth has no close analog for this question.'}</b> The best cell reaches ${pct(EF.best)}.${Q.miss.length?' This covers only what could be compared; '+Q.miss.map(x=>esc(x.toLowerCase())).join(' and ')+' could not.':''}${(lo=>EF.best>=.6&&lo.length?' Even the best cell breaks down on '+lo.map(r=>esc(fPlain(r.f).toLowerCase())).join(' and ')+'.':'')(EF.picks[0]?efRows(EF.picks[0].i).filter(r=>r.sim!=null&&r.sim<.6):[])}${EF.best<.6?' Consider testing in a chamber or by simulation instead of in the field.':''} <span class="na">Bands at 80% and 60% are our own rule of thumb, not a standard.</span></div>`)(efQ())}
+  <div class="grp">Compare on</div>
+  <div class="needs" style="margin:6px 0 6px">${g.features.filter(f=>T[f.key]).map(f=>{const on=EF.on[f.dimension]&&!EF.off[f.key];return `<button class="need${on?' on':''}" aria-pressed="${!!on}" title="${esc(f.label)} · group: ${esc(f.dimension)}" onclick="efFeat('${f.key}')">${esc(fShort(f))}</button>`}).join('')}</div>
+  <div class="note2">Switch single measurements on or off. Measurements in the same group (${dims.map(d=>esc(cap(d))).join(', ')}) share that group's weight.</div>
+  <details class="wts"><summary>Target values and sources</summary><div style="padding-bottom:8px">${dims.map(d=>`<div style="padding:4px 0 8px"><b style="font-size:13px">${esc(cap(d))}</b>${g.features.filter(f=>f.dimension===d&&T[f.key]).map(f=>`<div class="note2" style="margin:2px 0">${esc(f.label)}: target ${fVal(T[f.key].value,f)} · ${esc(T[f.key].source||'no source')}</div>`).join('')}</div>`).join('')}</div></details>
+  <div class="grp">Best distinct places</div>
+  ${EF.picks.map((p,k)=>`<button class="efr${p.i===EF.sel?' on':''}" onclick="efSel(${p.i})"><b>${k+1}</b><span>${efLL(p.la,p.lo)}${p.k?` <span class="cu">near ${esc(p.k.name)}</span>`:''}${efPNh(p.i)}</span><b>${pct(p.s)}${rkTag(EF.land,p.s)}</b></button>`).join('')||'<div class="note2">No cells to rank.</div>'}
+  <div class="note2">Places at least 800 km apart, so one region does not fill the list. “Top x% of Earth” is the share of all ${(EF.land||[]).length.toLocaleString()} cells scored on the dimensions switched on that score at least as high. Hiding known places does not change it.</div>
+  <label class="ck"><input type="checkbox" ${EF.hideKnown?'checked':''} onchange="efKnown(this.checked)"><span>Hide places we already know<small>within 500 km of our Earth analog sites; tagged “near …” when shown</small></span></label>
+  ${sp?`<div class="grp">Why ${efLL(sp.la,sp.lo)}${efPN(sp.i)?' · '+esc(efPN(sp.i)):''}</div>${anaVerdict(efRows(sp.i),efMiss())}
+  <div class="mh m4"><div>Measurement</div><div>${esc(S[EF.tid].name)}</div><div>This place</div><div>Similarity</div></div>
+  ${efRows(sp.i).map(r=>`<div class="mr m4"><div class="ml" title="${esc(r.f.label)}">${esc(fName(r.f))}<small>${esc(cap(r.f.dimension))}</small></div><div>${fVal(r.tv,r.f)}</div><div>${r.v!=null?fVal(r.v,r.f):'no data'}</div><div>${pct(r.sim)}</div></div>`).join('')}
+  <div class="btns" style="margin-top:10px"><button onclick="efCopy()">Copy this report as text</button></div>`:''}
+  <div class="note2">Each dimension counts equally; features inside one share its weight. Cells are ${g.cell_deg}° boxes, so small features are averaged away. A high score is a lead to check, not a verdict.</div>
+  <div class="btns"><button class="pri" onclick="efBack()">Back to ${esc(S[EF.tid].name)}</button></div>`}
+
+/* ---------- Pick any point (Moon, Mars) ----------
+   Click the focused Moon or Mars anywhere. Values come from docs/data/<body>_grid.json + <body>_<feature>.bin (pipeline/build_body_grid.py --body <body>):
+   the same features as targets.json, measured on the 111 km patch around every 1-degree point. Find on Earth then runs on
+   them exactly as for a named target (target id 'pick'). Nothing is estimated here: a missing value is shown as missing. */
+var PK={grids:{},body:null,lat:null,lon:null,T:null,pin:null},PK_BODIES=['moon','mars'];
+/* Which Earth-grid features each body is compared on, and why a missing one is missing. Text only, no numbers. */
+const PK_INFO={
+  moon:{keys:['slope_p90','slope_median','relief','hypso','ts_mean','ts_range'],
+    note:'Moon surface temperature is missing where LRO Diviner has too few observations between 10:15 and 10:45 or between 22:15 and 22:45 local time (scattered strips, about 8% of the Moon)'},
+  mars:{keys:['slope_p90','slope_median','relief','hypso','ts_day','albedo'],
+    note:'Mars daytime surface temperature is measured only for Jezero Crater, Olympus Mons and Valles Marineris (MGS TES). There is no global Mars temperature grid yet, so a picked point is compared on terrain, landform and albedo (MGS TES)'}};
+async function pkLoad(body){
+  if(PK.grids[body])return PK.grids[body];
+  const get=async u=>{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)throw new Error(u+' returned HTTP '+r.status);return r};
+  const m=await (await get(`data/${body}_grid.json`)).json(),v={};
+  for(const f of m.features){const b=await (await get(`data/${body}_${f.key}.bin`)).arrayBuffer();if(b.byteLength!==m.ny*m.nx*4)throw new Error(`${body}_${f.key}.bin does not match the size in ${body}_grid.json`);v[f.key]=new Float32Array(b)}
+  return PK.grids[body]={m,v}}
+function pkPin(){const v=VIS[PK.body];if(PK.pin)PK.pin.parent.remove(PK.pin);PK.pin=mkPin(v.R,ll(PK.lat,PK.lon,1).normalize(),0xffc857,true);v.mesh.add(PK.pin);PK.pin.visible=focused===PK.body}
+function pickAt(body,p){const q=VIS[body].mesh.worldToLocal(p.clone()).normalize();
+  PK.body=body;PK.lat=Math.asin(Math.max(-1,Math.min(1,q.y)))*180/Math.PI;PK.lon=Math.atan2(-q.z,q.x)*180/Math.PI;PK.T=null;pkPin();pkShow()}
+async function pkShow(){
+  const body=PK.body,bn=esc(DATA.bodies[body]?DATA.bodies[body].name:body),here=()=>$('pkb');
+  openPanel(`<div class="kick">${bn} · picked point</div><h2>${efLL(PK.lat,PK.lon)}</h2><div id="pkb"><div class="note2">Reading the ${bn} grid…</div></div>`);
+  let G;try{G=await pkLoad(body);await efLoad()}catch(e){if(here())here().innerHTML=`<div class="mp">The ${bn} grid is not built yet, so there are no values for this point.</div>
+    <div class="mp">Make it once with <b>python pipeline/build_body_grid.py --body ${body}</b> (README), then reload.</div><div class="note2">Details: ${esc(e.message)}</div>
+    <div class="btns"><button onclick="focusBody('${body}')">Back to ${bn}</button></div>`;return}
+  if(!here())return;
+  const m=G.m,i=Math.min(m.ny-1,Math.max(0,Math.floor((90-PK.lat)/m.cell_deg))),j=((Math.floor((PK.lon+180)/m.cell_deg)%m.nx)+m.nx)%m.nx,k=i*m.nx+j,
+    cla=90-(i+.5)*m.cell_deg,clo=-180+(j+.5)*m.cell_deg,T={};
+  m.features.forEach(f=>{const v=G.v[f.key][k];if(v===v)T[f.key]={value:v,source:f.source}});PK.T=T;PK.demo=!!m.demo;
+  const info=PK_INFO[body]||{keys:m.features.map(f=>f.key),note:''},
+    feats=EF.grid.features.filter(f=>info.keys.includes(f.key)),n=feats.filter(f=>T[f.key]).length,demo=m.demo||EF.grid.demo;
+  here().innerHTML=`${demo?'<div class="mock">DEMO data: the grids are made up to test the app.</div>':'<div class="realline">Real data, sources below</div>'}
+  <div class="sub" style="margin-top:6px">Values for the ${m.patch_km} km patch around the grid point nearest your click (${efLL(cla,clo)}), measured the same way as the named sites.</div>
+  <div class="grp">This point</div>
+  ${feats.map(f=>`<div class="mr one"><div class="ml" title="${esc(f.label)}">${esc(fName(f))}<small>${esc(cap(f.dimension))}</small></div><div class="mv">${T[f.key]?fVal(T[f.key].value,f):'<span class="na">No sourced value</span>'}</div></div>`).join('')}
+  ${n<feats.length?`<div class="note2">${feats.length-n} feature${feats.length-n>1?'s have':' has'} no sourced value here${info.note&&feats.some(f=>/thermal/.test(f.dimension)&&!T[f.key])?'. '+esc(info.note):''}. Find on Earth compares on the rest.</div>`:''}
+  <div id="pkeb"><div class="note2">Checking how close Earth can get…</div></div>
+  <div class="btns">${n?`<button class="pri" onclick="pkFind()">Find similar places on Earth</button>`:''}<button onclick="focusBody('${body}')">Back to ${bn}</button></div>
+  <details class="wts"><summary>Sources</summary><div style="padding-bottom:8px">${[...new Set(Object.values(T).map(x=>x.source))].map(x=>`<div class="note2" style="margin:2px 0">${esc(x)}</div>`).join('')}</div></details>
+  <div class="note2">Click another point to compare it instead.</div>`;
+  const E=await ebLoad(body),el=$('pkeb');if(!el)return;if(!E){el.innerHTML='';return}
+  const rows=Object.entries(E.layers).map(([st,L])=>{const k=ebK(E.meta,PK.lat,PK.lon),v=L.best[k];if(v!==v)return '';const i=L.cell[k];
+    return `<div class="mr one"><div class="ml">${st==='all'?'Terrain, landform and temperature':st==='albedo'?'Terrain, landform and albedo':'Terrain and landform'}<small>best Earth match · ${ebEarthLL(i)}${efPN(i)?' · '+esc(efPN(i)):''}</small></div><div class="mv">${Math.round(v)}%</div></div>`}).join('');
+  const kk=ebK(E.meta,PK.lat,PK.lon),why=Object.entries(E.layers).reverse().map(([st,L])=>ebWhy(L,kk,st)).find(x=>x)||'';
+  el.innerHTML=!rows?'':`<div class="grp">How close can Earth get?</div>${rows}<div class="note2">The best score any Earth land cell reaches for this point (pipeline/build_gap_map.py). See the Earth Analog layers under GIS for all of ${esc(theB(body))}.</div>${why}`}
+/* "Why this score": for the best Earth cell of a gap-map layer, each measurement side by side with Earth's whole range,
+   and a sentence naming what holds the score down. Every number is read from the grids; nothing is estimated. */
+const EBR={};
+function ebRange(key){if(EBR[key])return EBR[key];const a=EF.feats[key];let lo=Infinity,hi=-Infinity;for(let i=0;i<a.length;i++){const v=a[i];if(v===v){if(v<lo)lo=v;if(v>hi)hi=v}}return EBR[key]={lo,hi}}
+function ebWhy(L,k,st){
+  const v=L.best[k];if(v!==v||!EF.grid||!EF.feats)return '';const i=L.cell[k],T=PK.T||{};
+  const fs=L.meta.features.map(key=>EF.grid.features.find(f=>f.key===key)).filter(f=>f&&T[f.key]&&EF.feats[f.key]);if(!fs.length)return '';
+  const rows=fs.map(f=>{const h=T[f.key].value,e=EF.feats[f.key][i],r=ebRange(f.key),sim=e===e?1-Math.min(1,Math.abs(h-e)/(f.scale||1)):null,out=h>r.hi?'above':h<r.lo?'below':'';return {f,h,e,r,sim,out}});
+  const worst=rows.filter(x=>x.sim!=null).sort((a,b)=>a.sim-b.sim)[0],val=fVal;
+  const outs=rows.filter(x=>x.out);
+  let say;
+  if(outs.length)say=outs.map(x=>`<b>${esc(fPlain(x.f))}</b> here is ${val(x.h,x.f)}. The ${x.out==='above'?'highest':'lowest'} value on any Earth land cell is ${val(x.out==='above'?x.r.hi:x.r.lo,x.f)}, so Earth has nothing like this.`).join(' ')+` That is what holds the best match to ${Math.round(v)}%.`;
+  else if(worst&&worst.sim<.9)say=`Earth has values in this range, but not all together in one place. The best cell is furthest off on <b>${esc(fPlain(worst.f))}</b>: ${val(worst.h,worst.f)} here, ${val(worst.e,worst.f)} there, ${Math.round(worst.sim*100)}% alike. That holds the match to ${Math.round(v)}%.`;
+  else say=`Every measurement here is inside Earth's range, and one Earth cell has them all close together, so the match is ${Math.round(v)}%.`;
+  return `<div class="grp">Why this score? ${st==='all'?'Terrain, landform and temperature':st==='albedo'?'Terrain, landform and albedo':'Terrain and landform'}, ${Math.round(v)}%</div><div class="mp">${say}</div>
+  ${rows.map(x=>`<div class="mr one"><div class="ml">${esc(fName(x.f))}<small>here ${val(x.h,x.f)} · best Earth cell ${x.e===x.e?val(x.e,x.f):'no value'} · Earth range ${val(x.r.lo,x.f)} to ${val(x.r.hi,x.f)}${x.out?' · <b>outside Earth\'s range</b>':''}</small></div><div class="mv">${x.sim==null?'–':Math.round(x.sim*100)+'%'}</div></div>`).join('')}
+  <div class="note2">Per measurement: 1 − difference ÷ scale. Measurements in the same group share its weight; groups count equally. Scored on: ${fs.map(f=>esc(fPlain(f).toLowerCase())).join(', ')}. The best cell is ${ebEarthLL(i)}${efPN(i)?' ('+esc(efPN(i))+')':''}.</div>`}
+function pkFind(){if(!PK.T)return;S.pick={id:'pick',name:'Picked point '+efLL(PK.lat,PK.lon),body:PK.body,lat:PK.lat,lon:PK.lon,type:'target'};
+  if(!EF.targets)EF.targets={targets:{}};EF.targets.targets.pick=PK.T;efStart('pick')}
+function pkBack(){const v=VIS[PK.body],c=v.mesh.position.clone(),dir=v.mesh.localToWorld(ll(PK.lat,PK.lon,v.R)).sub(c).normalize();
+  efHide();focused=PK.body;sel=null;setMarkers();buildBar();hint.style.display='none';flyTo(c.clone().add(dir.multiplyScalar(v.R*2.7)),c,v.R*1.2);pkShow()}
+function efBack(){EF.tid==='pick'?pkBack():showSite(EF.tid)}
+
+/* ---------- Planetary GIS ----------
+   Full planetary raster explorer for Earth, Moon, and Mars. Displays 1-degree gridded datasets
+   from NASA (LRO LOLA, LRO Diviner, MODIS Terra), NOAA (ETOPO 2022), and USGS (MGS MOLA). */
+const GIS_LAYER_INFO={
+  slope_p90:{short:'Steep Slope',name:'Steep slope (90th percentile)',cat:'Terrain',unit:'°',ramp:'terrain',desc:'Slope exceeded by only 10% of local terrain points; highlights steep cliffs and crater rims.'},
+  slope_median:{short:'Typical Slope',name:'Typical slope (median)',cat:'Terrain',unit:'°',ramp:'terrain',desc:'Median local slope; indicates general ground traversability.'},
+  relief:{short:'Local Relief',name:'Local relief (P95 − P5)',cat:'Landform',unit:'m',ramp:'relief',desc:'Elevation difference between 95th and 5th percentiles within each 111 km patch.'},
+  hypso:{short:'Landform Shape',name:'Landform shape (hypsometric integral)',cat:'Landform',unit:'index',ramp:'hypso',desc:'Landform morphology (0–1): low = plains with isolated peaks; high = elevated plateau.'},
+  ts_mean:{short:'Surface Temp',name:'Mean surface temperature',cat:'Thermal',unit:'°C',ramp:'temp',desc:'Mean skin temperature averaged over day and night observations.'},
+  ts_range:{short:'Temp Swing',name:'Day-night temp swing',cat:'Thermal',unit:'°C',ramp:'swing',desc:'Thermal range between local daytime and nighttime surface temperatures.'},
+  ts_day:{short:'Day Temp',name:'Daytime surface temperature',cat:'Thermal',unit:'°C',ramp:'temp',desc:'Daytime skin temperature. Earth: MODIS, about 10:30 local time. Mars: MGS TES, three named sites only.'},
+  t_mean:{short:'Air Temp (2m)',name:'Mean air temperature (2 m)',cat:'Air',unit:'°C',ramp:'temp',desc:'2-meter ambient air temperature for bioclimatic context (Earth only).'},
+  t_range:{short:'Air Temp Range',name:'Annual air temp range',cat:'Air',unit:'°C',ramp:'swing',desc:'Annual air temperature range (warmest minus coldest month, Earth only).'},
+  albedo:{short:'Albedo',name:'Surface albedo',cat:'Albedo',unit:'',ramp:'albedo',desc:'Share of sunlight the surface reflects (0 to 1). Earth: MODIS white-sky shortwave, 2025. Mars: TES bolometric albedo. No like-for-like Moon map yet.'},
+  earth_best_terrain:{short:'Earth Analog',name:'Best match anywhere on Earth: terrain and landform',cat:'Analog',unit:'%',ramp:'gap',desc:'For each point, the highest Find on Earth score any Earth land cell reaches on slope, relief and landform shape. Bright = Earth has no close analog here.'},
+  earth_best_albedo:{short:'Analog + Albedo',name:'Best match anywhere on Earth: terrain, landform and albedo',cat:'Analog',unit:'%',ramp:'gap',desc:'As Earth Analog, with surface albedo added (MGS TES on Mars, MODIS on Earth). This is what clicking a Mars point compares on. Bright = Earth has no close analog here.'},
+  earth_best_all:{short:'Analog + Temp',name:'Best match anywhere on Earth: terrain, landform and surface temperature',cat:'Analog',unit:'%',ramp:'gap',desc:'As Earth Analog, with LRO Diviner surface temperature added. Empty where Diviner has no value. Bright = Earth has no close analog here.'}
+};
+const GIS_RAMPS={
+  terrain:[[0,[26,35,60]],[.2,[40,110,120]],[.45,[100,175,90]],[.7,[230,170,50]],[.9,[225,75,45]],[1,[255,235,220]]],
+  relief:[[0,[15,25,55]],[.25,[30,120,140]],[.5,[110,190,90]],[.75,[240,195,40]],[.9,[215,60,60]],[1,[255,255,255]]],
+  temp:[[0,[50,15,95]],[.2,[35,80,190]],[.4,[50,170,210]],[.6,[70,190,120]],[.8,[245,195,45]],[1,[235,45,30]]],
+  swing:[[0,[20,30,65]],[.3,[60,100,180]],[.6,[190,110,210]],[.85,[245,120,60]],[1,[255,240,150]]],
+  hypso:[[0,[20,45,85]],[.35,[35,135,140]],[.65,[130,190,80]],[1,[250,225,70]]],
+  albedo:[[0,[18,18,20]],[.5,[130,130,128]],[1,[250,250,245]]],
+  gap:[[0,[255,200,87]],[.35,[214,120,40]],[.7,[70,62,58]],[1,[38,40,44]]]
+};
+var GIS={active:false,keep:false,body:'earth',layer:'slope_p90',opacity:.8,smooth:true,probed:null,meshes:{},texs:{},cvs:{},grids:{},ranges:{},pin:null};
+function gisRamp(type,t){
+  const stops=GIS_RAMPS[type]||GIS_RAMPS.terrain;if(t<=stops[0][0])return stops[0][1];
+  for(let i=1;i<stops.length;i++){const[p0,c0]=stops[i-1],[p1,c1]=stops[i];if(t<=p1){const u=(t-p0)/(p1-p0);return[Math.round(c0[0]+(c1[0]-c0[0])*u),Math.round(c0[1]+(c1[1]-c0[1])*u),Math.round(c0[2]+(c1[2]-c0[2])*u)]}}
+  return stops[stops.length-1][1]}
+function gisLegendGradient(type){
+  const stops=GIS_RAMPS[type]||GIS_RAMPS.terrain;
+  return 'linear-gradient(90deg,'+stops.map(([pos,rgb])=>`rgb(${rgb.join(',')}) ${Math.round(pos*100)}%`).join(',')+')'}
+function gisAvailableLayers(body){
+  if(body==='earth')return['slope_p90','slope_median','relief','hypso','ts_mean','ts_range','t_mean','t_range','albedo'];
+  if(body==='moon')return['slope_p90','slope_median','relief','hypso','ts_mean','ts_range','earth_best_terrain','earth_best_all'];
+  if(body==='mars')return['slope_p90','slope_median','relief','hypso','albedo','earth_best_terrain','earth_best_albedo'];
+  return['slope_p90']}
+async function gisLoad(body){
+  if(GIS.grids[body])return GIS.grids[body];
+  const isEarth=body==='earth',metaUrl=isEarth?'data/grid.json':`data/${body}_grid.json`,
+    get=async u=>{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)throw new Error(u+' returned HTTP '+r.status);return r},
+    m=await(await get(metaUrl)).json(),v={};
+  for(const f of m.features){
+    const binUrl=isEarth?`data/${f.key}.bin`:`data/${body}_${f.key}.bin`,
+      buf=await(await get(binUrl)).arrayBuffer();
+    if(buf.byteLength===180*360*4)v[f.key]=new Float32Array(buf)}
+  if(!isEarth){const E=await ebLoad(body);if(E)for(const st in E.layers){const L=E.layers[st];v['earth_best_'+st]=L.best;v['earth_best_'+st+'_cell']=L.cell;
+    m.features.push({key:'earth_best_'+st,source:`Generated by pipeline/build_gap_map.py from the ${DATA.bodies[body]?DATA.bodies[body].name:body} grid (${L.meta.body_sources.join('; ')}) and the Earth grid (${L.meta.earth_sources.join('; ')}); scored on ${L.meta.features.join(', ')}.`})}}
+  return GIS.grids[body]={m,v}}
+/* "Where Earth has no analog": for every Moon/Mars point, the best Find on Earth score any Earth cell reaches, and which cell.
+   Made by pipeline/build_gap_map.py (docs/data/<body>_earthbest.json + _earthbest_<set>[_cell].bin). Missing files = layer hidden. */
+const EB={},theB=b=>b==='moon'?'the Moon':DATA.bodies[b]?DATA.bodies[b].name:b;
+async function ebLoad(body){if(body in EB)return EB[body];try{
+  const get=async u=>{const r=await fetch(u,{cache:'no-cache'});if(!r.ok)throw new Error(u+' returned HTTP '+r.status);return r},meta=await (await get(`data/${body}_earthbest.json`)).json(),layers={};
+  for(const st in meta.layers){const n=meta.ny*meta.nx,a=new Float32Array(await (await get(`data/${body}_earthbest_${st}.bin`)).arrayBuffer()),c=new Float32Array(await (await get(`data/${body}_earthbest_${st}_cell.bin`)).arrayBuffer());
+    if(a.length===n&&c.length===n)layers[st]={best:a,cell:c,meta:meta.layers[st]}}
+  return EB[body]={meta,layers}}catch(e){return EB[body]=null}}
+const ebK=(m,lat,lon)=>Math.min(m.ny-1,Math.max(0,Math.floor((90-lat)/m.cell_deg)))*m.nx+((Math.floor((lon+180)/m.cell_deg)%m.nx)+m.nx)%m.nx;
+const ebEarthLL=i=>efLL(90-(Math.floor(i/360)+.5),-180+(i%360+.5));
+function ebSummary(body,st){const E=EB[body],L=E&&E.layers[st];if(!L)return '';const s=L.meta.summary,bn=DATA.bodies[body]?DATA.bodies[body].name:body;
+  return `<div class="note2" style="margin-top:8px">Scored ${s.points.toLocaleString()} ${esc(bn)} points against ${s.earth_cells.toLocaleString()} Earth land cells. Earth reaches 80% or more over <b>${s.area_ge_80}%</b> of ${esc(theB(body))} by area and stays under 50% over <b>${s.area_lt_50}%</b>; median best match ${s.median}%, lowest ${s.min}%.</div>`}
+function gisPaint(body,layerKey,arr,min,max){
+  const v=VIS[body];
+  if(!GIS.cvs[body]){
+    const cv=document.createElement('canvas');cv.width=360;cv.height=180;GIS.cvs[body]=cv;
+    const tex=new THREE.CanvasTexture(cv);
+    tex.magFilter=GIS.smooth?THREE.LinearFilter:THREE.NearestFilter;
+    tex.minFilter=THREE.LinearFilter;
+    tex.generateMipmaps=false;
+    GIS.texs[body]=tex;
+    const mesh=new THREE.Mesh(new THREE.SphereGeometry(v.R*1.006,96,64),new THREE.MeshBasicMaterial({map:tex,transparent:true,opacity:GIS.opacity,depthWrite:false}));
+    v.mesh.add(mesh);GIS.meshes[body]=mesh}
+  const cv=GIS.cvs[body],ctx=cv.getContext('2d'),img=ctx.createImageData(360,180),d=img.data,
+    span=(max-min)||1,rampType=(GIS_LAYER_INFO[layerKey]||{}).ramp||'terrain';
+  for(let i=0;i<arr.length;i++){
+    const val=arr[i],o=i*4;
+    if(val!==val){d[o]=0;d[o+1]=0;d[o+2]=0;d[o+3]=0;continue}
+    const norm=Math.max(0,Math.min(1,(val-min)/span)),rgb=gisRamp(rampType,norm);
+    d[o]=rgb[0];d[o+1]=rgb[1];d[o+2]=rgb[2];d[o+3]=255}
+  ctx.putImageData(img,0,0);
+  GIS.texs[body].magFilter=GIS.smooth?THREE.LinearFilter:THREE.NearestFilter;
+  GIS.texs[body].needsUpdate=true;GIS.meshes[body].visible=true;GIS.meshes[body].material.opacity=GIS.opacity;
+  for(const b of ['earth','moon','mars'])if(b!==body&&GIS.meshes[b])GIS.meshes[b].visible=false}
+async function gisUpdate(){
+  const body=GIS.body,layerKey=GIS.layer;if(layerKey.startsWith('earth_best_'))efLoad().catch(()=>{});
+  let G;try{G=await gisLoad(body)}catch(e){toast('Could not load GIS dataset: '+e.message);return}
+  const arr=G.v[layerKey];
+  if(!arr){if(GIS.meshes[body])GIS.meshes[body].visible=false;gisRenderPanel();return}
+  let r=GIS.ranges[body+'_'+layerKey];
+  if(!r){
+    let min=Infinity,max=-Infinity;const valid=[];
+    for(let i=0;i<arr.length;i++){const val=arr[i];if(val===val){if(val<min)min=val;if(val>max)max=val;valid.push(val)}}
+    valid.sort((a,b)=>a-b);
+    const median=valid.length?valid[Math.floor(valid.length/2)]:0;
+    r=GIS.ranges[body+'_'+layerKey]={min,median,max,count:valid.length}}
+  gisPaint(body,layerKey,arr,r.min,r.max);gisRenderPanel()}
+function gisSetOpacity(val){
+  GIS.opacity=val;const m=GIS.meshes[GIS.body];
+  if(m&&m.material)m.material.opacity=val;
+  const el=$('gis-op-val');if(el)el.textContent=Math.round(val*100)+'%'}
+function gisToggleSmooth(smooth){
+  GIS.smooth=smooth;
+  for(const b in GIS.texs){
+    if(GIS.texs[b]){
+      GIS.texs[b].magFilter=smooth?THREE.LinearFilter:THREE.NearestFilter;
+      GIS.texs[b].needsUpdate=true;
+    }
+  }
+  gisRenderPanel()}
+async function gisSwitchBody(newBody){
+  GIS.body=newBody;
+  const avail=gisAvailableLayers(newBody);
+  if(!avail.includes(GIS.layer))GIS.layer=avail[0]||'slope_p90';
+  GIS.probed=null;
+  if(GIS.pin&&GIS.pin.parent)GIS.pin.parent.remove(GIS.pin);GIS.pin=null;
+  if(clouds)clouds.visible=newBody!=='earth';
+  focused=newBody;sel=null;
+  const v=VIS[newBody],c=v.mesh.position.clone(),dir=camera.position.clone().sub(c).normalize(),dist=v.R*(innerWidth<860?5.2:3.8);
+  setMarkers();buildBar();hint.style.display='none';flyTo(c.clone().add(dir.multiplyScalar(dist)),c,v.R*1.2);
+  GIS.keep=true;gisRenderPanel();GIS.keep=false;
+  await gisUpdate()}
+async function gisSwitchLayer(layerKey){
+  GIS.layer=layerKey;GIS.keep=true;gisRenderPanel();GIS.keep=false;await gisUpdate()}
+function gisProbe(body,point){
+  const q=VIS[body].mesh.worldToLocal(point.clone()).normalize(),
+    lat=Math.asin(Math.max(-1,Math.min(1,q.y)))*180/Math.PI,
+    lon=Math.atan2(-q.z,q.x)*180/Math.PI,
+    i=Math.min(179,Math.max(0,Math.floor((90-lat)/1.0))),
+    j=((Math.floor((lon+180)/1.0)%360)+360)%360,
+    k=i*360+j,cla=90-(i+.5)*1.0,clo=-180+(j+.5)*1.0,
+    grid=GIS.grids[body],vals={};
+  if(grid&&grid.m&&grid.m.features){
+    grid.m.features.forEach(f=>{const a=grid.v[f.key];if(a&&a[k]===a[k])vals[f.key]=a[k]})}
+  GIS.probed={lat,lon,cla,clo,k,vals,body};
+  const v=VIS[body];if(GIS.pin&&GIS.pin.parent)GIS.pin.parent.remove(GIS.pin);
+  const up=ll(lat,lon,1).normalize();
+  GIS.pin=mkPin(v.R,up,body==='earth'?0x5ec8ff:0xffc857,true);v.mesh.add(GIS.pin);
+  GIS.keep=true;gisRenderPanel();GIS.keep=false}
+function gisGetSourceNotes(){
+  const g=GIS.grids[GIS.body];if(!g||!g.m||!g.m.features)return '<div class="note2">Loading sources…</div>';
+  return g.m.features.map(f=>{const li=GIS_LAYER_INFO[f.key]||{};return `<div class="note2" style="margin:4px 0"><b>${esc(li.name||f.key)}:</b> ${esc(f.source||f.label||'')}</div>`}).join('')}
+function gisRenderPanel(){
+  const body=GIS.body,bName=DATA&&DATA.bodies&&DATA.bodies[body]?DATA.bodies[body].name:cap(body),
+    avail=gisAvailableLayers(body),activeInfo=GIS_LAYER_INFO[GIS.layer]||{short:GIS.layer,name:GIS.layer,cat:'GIS',unit:'',desc:''},
+    rampType=activeInfo.ramp||'terrain',range=GIS.ranges[body+'_'+GIS.layer];
+  let probeHtml='';
+  if(GIS.probed){
+    const p=GIS.probed,activeV=p.vals[GIS.layer];
+    probeHtml=`<div class="gis-probe">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <b style="font-size:13px;color:${body==='earth'?'var(--acc)':'var(--gold)'}">${efLL(p.lat,p.lon)}</b>
+        <span style="font-size:11px;color:var(--mute)">cell ${efLL(p.cla,p.clo)}</span>
+      </div>
+      <div style="margin-top:6px;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text)">
+        ${esc(activeInfo.short)}: <span style="color:${body==='earth'?'var(--acc)':'var(--gold)'}">${activeV!=null?fmt2(activeV)+esc(un(activeInfo.unit)):'No data'}</span>
+      </div>
+      ${GIS.layer.startsWith('earth_best_')&&p.vals[GIS.layer]!=null&&GIS.grids[body].v[GIS.layer+'_cell']?(()=>{const i=GIS.grids[body].v[GIS.layer+'_cell'][p.k];return `<div class="note2" style="margin-top:4px">Closest Earth place: <b>${ebEarthLL(i)}</b>${efPN(i)?' · '+esc(efPN(i)):''}</div><div class="btns" style="margin-top:6px"><button onclick="ebOpen('${body}',${p.lat},${p.lon})">Compare this point on Earth</button></div>`})():''}
+      <details class="wts" style="margin-top:6px"><summary>All layers at this cell</summary>
+        <div style="padding-top:4px">${avail.map(k=>{const v=p.vals[k],li=GIS_LAYER_INFO[k]||{};return `<div class="mr one" style="padding:2px 0"><div class="ml">${esc(li.short||k)}</div><div class="mv">${v!=null?fmt2(v)+esc(un(li.unit)):'no data'}</div></div>`}).join('')}</div>
+      </details>
+    </div>`}
+  else{probeHtml='<div class="note2" style="margin:6px 0 10px">Click anywhere on the globe to inspect coordinates and real values.</div>'}
+
+  const content=`<div class="kick">Planetary GIS</div><h2>${bName} GIS</h2>
+    <div style="margin:10px 0 12px"><div class="seg" role="tablist">${[['earth','Earth'],['moon','Moon'],['mars','Mars']].map(([k,l])=>`<button class="${body===k?'on':''}" onclick="gisSwitchBody('${k}')">${l}</button>`).join('')}</div></div>
+    <div class="grp">Choose Layer</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0 12px">
+      ${avail.map(k=>{
+        const on=GIS.layer===k,li=GIS_LAYER_INFO[k]||{};
+        return `<button class="gis-opt${on?' on':''}" onclick="gisSwitchLayer('${k}')">
+          <span class="gis-opt-title">${esc(li.short)}</span>
+          <span class="gis-opt-unit">${esc(li.unit)}</span>
+        </button>`}).join('')}
+    </div>
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;margin:8px 0">
+      <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:13.5px;color:var(--text)">${esc(activeInfo.name)}</b><span style="font:500 11px var(--mono);color:var(--acc)">${esc(activeInfo.unit)}</span></div>
+      <div class="sub" style="margin:3px 0 8px;font-size:11.5px">${esc(activeInfo.desc)}</div>
+      <div class="efl" style="background:${gisLegendGradient(rampType)}"></div>
+      <div class="efs"><span>${range?fmt2(range.min)+esc(un(activeInfo.unit)):'…'}</span><span>median: ${range?fmt2(range.median)+esc(un(activeInfo.unit)):'…'}</span><span>${range?fmt2(range.max)+esc(un(activeInfo.unit)):'…'}</span></div>
+      ${GIS.layer.startsWith('earth_best_')?ebSummary(body,GIS.layer.slice(11))+'<div class="note2">Earth cannot reproduce gravity, vacuum, the thin Mars air or radiation in any case; this map only covers what the grids measure, at 1° (about 111 km on Earth).</div>':''}
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:10px 0 4px">
+      <span style="font:500 11px var(--mono);color:var(--mute);text-transform:uppercase;letter-spacing:.06em">Layer opacity: <span id="gis-op-val" style="color:var(--text)">${Math.round(GIS.opacity*100)}%</span></span>
+      <div class="seg" style="height:24px"><button class="${GIS.smooth?'on':''}" style="font-size:10.5px;padding:2px 8px" onclick="gisToggleSmooth(true)">Smooth</button><button class="${!GIS.smooth?'on':''}" style="font-size:10.5px;padding:2px 8px" onclick="gisToggleSmooth(false)">Grid</button></div>
+    </div>
+    <input type="range" min="0.1" max="1" step="0.05" value="${GIS.opacity}" oninput="gisSetOpacity(parseFloat(this.value))" style="width:100%;accent-color:var(--acc);margin-bottom:8px">
+    <div class="grp" style="margin-top:10px">Point Inspector</div>${probeHtml}
+    <details class="wts" style="margin-top:12px"><summary>Dataset Sources &amp; Citations</summary><div style="padding:6px 0 8px">${gisGetSourceNotes()}</div></details>
+    <div class="btns" style="margin-top:12px"><button class="pri" onclick="overview()">Back to Overview</button></div>`;
+  GIS.keep=true;openPanel(content);GIS.keep=false}
+async function gisOpen(body,layerKey){
+  GIS.active=true;GIS.body=body||'earth';
+  const avail=gisAvailableLayers(GIS.body);
+  if(layerKey&&avail.includes(layerKey))GIS.layer=layerKey;
+  else if(!avail.includes(GIS.layer))GIS.layer=avail[0]||'slope_p90';
+  if(clouds)clouds.visible=GIS.body!=='earth';
+  focusBody(GIS.body);
+  GIS.keep=true;gisRenderPanel();GIS.keep=false;
+  await gisUpdate()}
+function ebOpen(body,lat,lon){gisHide();PK.body=body;PK.lat=lat;PK.lon=lon;PK.T=null;focused=body;setMarkers();pkPin();pkShow()}
+function gisHide(){
+  GIS.active=false;
+  for(const b in GIS.meshes)if(GIS.meshes[b])GIS.meshes[b].visible=false;
+  if(GIS.pin&&GIS.pin.parent){GIS.pin.parent.remove(GIS.pin);GIS.pin=null}
+  if(clouds)clouds.visible=true;
+  buildBar()}
+
+/* ---------- Picking ---------- */
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();let down=null;
+renderer.domElement.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,t:performance.now()};tween=null});
+renderer.domElement.addEventListener('pointerup',e=>{
+  if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>6||performance.now()-down.t>500){down=null;return}down=null;
+  mouse.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(mouse,camera);
+  const hit=ray.intersectObjects([...meshes,...markers.filter(m=>m.visible)],false)[0];if(!hit)return;const u=hit.object.userData;
+  if(GIS.active){
+    if(u.id===GIS.body){gisProbe(GIS.body,hit.point);return}
+    if(['earth','moon','mars'].includes(u.id)){gisSwitchBody(u.id);return}
+  }
+  if(u.kind==='site'){if(GIS.active)gisHide();focusBody(S[u.key].body,u.key)}else if(focused!==u.id)focusBody(u.id);else if(PK_BODIES.includes(u.id))pickAt(u.id,hit.point)});
+
+/* ---------- Hover and search ---------- */
+renderer.domElement.addEventListener('pointermove',e=>{if(down)return;mouse.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);ray.setFromCamera(mouse,camera);
+  const h=ray.intersectObjects([...meshes,...markers.filter(m=>m.visible)],false)[0],n=h&&h.object.userData.kind==='site'?h.object:null;
+  renderer.domElement.style.cursor=h?'pointer':'grab';if(n!==hov){hov=n;setMarkers()}});
+const Q=$('q'),RES=$('res');
+Q.oninput=()=>{const s=Q.value.trim().toLowerCase();if(!s){RES.style.display='none';return}
+  const it=[...Object.keys(VIS).map(id=>({n:DATA.bodies[id]?DATA.bodies[id].name:VIS[id].name,t:'Planet',f:()=>focusBody(id)})),...DATA.sites.map(x=>({n:x.name,t:DATA.bodies[x.body].name+' · '+(x.type==='target'?'candidate':'analog'),f:()=>focusBody(x.body,x.id)}))].filter(i=>i.n.toLowerCase().includes(s)).slice(0,8);
+  RES.innerHTML='';it.forEach(i=>{const b=document.createElement('button');b.innerHTML=`${i.n}<small>${i.t}</small>`;b.onclick=()=>{i.f();Q.value='';RES.style.display='none'};RES.appendChild(b)});
+  const r=Q.getBoundingClientRect();RES.style.left=r.left+'px';RES.style.top=r.bottom+4+'px';RES.style.display=it.length?'block':'none'};
+addEventListener('keydown',e=>{if(e.key==='Escape'){RES.style.display='none';overview()}});
+
+/* ---------- Loop ---------- */
+function resize(){const desktop=innerWidth>=860;if(desktop!==panelMode){panel.style.width='';panel.style.height='';panelMode=desktop}renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();shiftT=panelOffset();shiftYT=panel.style.display==='block'&&!desktop?innerHeight*.19:0}
+addEventListener('resize',resize);resize();{const o=OV.pos.sub(OV.tgt);camera.position.copy(OV.tgt).addScaledVector(o,Math.min(1.35,650/o.length()))}controls.target.copy(OV.tgt);
+setData(JSON.parse(JSON.stringify(EMPTY)));loadBase().then(()=>{let seen=false;try{seen=!!localStorage.getItem('about-seen')}catch(e){}if(!seen)setTimeout(()=>{if(panel.style.display!=='block')showAbout()},1800)});
+const pv=new THREE.Vector3();
+let last=0;const cand=[];
+function place(el,x,y,w,pri,top,bot){cand.push({el,x,y,w,pri,top,bot})}
+function declutter(){cand.sort((a,b)=>b.pri-a.pri);const ok=[];
+  for(const c of cand){const l=c.x-c.w/2,r=c.x+c.w/2,t=c.y+c.top,b=c.y+c.bot;let hit=false;
+    for(const o of ok)if(l<o.r+4&&r>o.l-4&&t<o.b+2&&b>o.t-2){hit=true;break}
+    c.el.style.display=hit?'none':'block';if(!hit){ok.push({l,r,t,b});c.el.style.left=c.x+'px';c.el.style.top=c.y+'px'}}
+  cand.length=0}
+function tick(now){requestAnimationFrame(tick);
+  const dt=Math.min(.05,(now-last)/1000||0);last=now;const fv=Math.tan(.4363)*2;
+  for(const id in VIS){const v=VIS[id];if(focused!==id)v.mesh.rotation.y+=v.spin;
+    if(focused){v.label.style.display='none';continue}
+    pv.copy(v.mesh.position).project(camera);if(pv.z>=1){v.label.style.display='none';continue}
+    const pr=v.R/camera.position.distanceTo(v.mesh.position)*innerHeight/fv;
+    place(v.label,(pv.x*.5+.5)*innerWidth,(-pv.y*.5+.5)*innerHeight+pr+6,v.label.textContent.length*7.2+24,id==='sun'?4:v.deco?3:10,0,24)}
+  clouds.rotation.y+=.0003;
+  const pu=1+.2*Math.sin(now/320);
+  for(const m of markers){const L=m.userData.lbl;if(!m.visible){L.style.display='none';continue}
+    pingTick(m.userData.ring,now,m.userData.ph);m.getWorldPosition(pv);const c=VIS[S[m.userData.key].body].mesh.position,fc=pv.clone().sub(c).dot(camera.position.clone().sub(pv))>0;pv.project(camera);
+    if(!(fc&&pv.z<1)){L.style.display='none';continue}
+    const on=sel===m.userData.key;L.classList.toggle('on',on);
+    place(L,(pv.x*.5+.5)*innerWidth,(-pv.y*.5+.5)*innerHeight,L.textContent.length*6.4+22,on?20:S[m.userData.key].type==='target'?6:5,-34,-10)}
+  if(EF.pg&&EF.pg.visible)for(const q of EF.pinEls){q.g.getWorldPosition(pv);const c=VIS.earth.mesh.position,fc=pv.clone().sub(c).dot(camera.position.clone().sub(pv))>0;pv.project(camera);
+    if(q.on)pingTick(q.g,now,0);if(!(fc&&pv.z<1)){q.el.style.display='none';continue}
+    place(q.el,(pv.x*.5+.5)*innerWidth,(-pv.y*.5+.5)*innerHeight,q.el.textContent.length*6.6+20,q.on?25:8,-34,-10)}
+  else for(const q of (EF.pinEls||[]))q.el.style.display='none';
+  if(GIS.pin&&GIS.pin.userData&&GIS.pin.userData.ping)pingTick(GIS.pin,now,0);
+  declutter();
+  ringsG.visible=belt.visible=!focused;belt.rotation.y+=.00006;SUNSP.scale.setScalar(120+7*Math.sin(now/900));
+  if(!focused){MO.a+=.12*dt;VIS.moon.mesh.position.set(MO.r*Math.cos(MO.a),MO.r*.12*Math.sin(MO.a),MO.r*Math.sin(MO.a))}
+  cometTick(dt);
+  if(tween){const t=Math.min(1,(now-tween.t0)/tween.dur),e=t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+    camera.position.lerpVectors(tween.p0,tween.p1,e);controls.target.lerpVectors(tween.a,tween.b,e);if(t>=1){controls.minDistance=tween.minD;tween=null}}
+  shift+=(shiftT-shift)*.12;shiftY+=(shiftYT-shiftY)*.12;
+  if(Math.abs(shift)>.5||Math.abs(shiftY)>.5)camera.setViewOffset(innerWidth,innerHeight,shift,shiftY,innerWidth,innerHeight);else camera.clearViewOffset();
+  controls.update();renderer.render(scene,camera)}
+requestAnimationFrame(tick);LD.start();
+</script>
+<script src="planner.js"></script>
+</body>
+</html>
