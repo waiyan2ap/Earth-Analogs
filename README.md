@@ -1,6 +1,6 @@
 # Earth Analogs Explorer
 
-*This is cloned repo, (click here)[https://github.com/Phyokyawkaung/Pipilapu_NASA.git] for original repo*
+*This is cloned repo, [click here](https://github.com/Phyokyawkaung/Pipilapu_NASA.git) for original repo*
 
 Interactive 3D Planetary Geovisualization, Comparative Terrestrial Analogs Engine, and Extraterrestrial Base Siting Planner.
 
